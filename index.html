@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL // IMMIGRATION_PORT_OF_ENTRY_v4.8</title>
+    <title>TERMINAL // IMMIGRATION_PORT_OF_ENTRY_v5.0</title>
     <style>
         body {
             background-color: #0c0802;
@@ -41,3 +41,596 @@
         }
         .container {
             padding: 20px;
+            max-width: 1500px;
+            margin: auto;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: #110b03;
+            padding: 15px;
+            border: 1px solid #ffb000;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        input[type="text"], select, textarea {
+            background: #000;
+            color: #ffb000;
+            border: 1px solid #ffb000;
+            padding: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+        }
+        
+        .search-box-container input {
+            width: 450px;
+        }
+        
+        .passport-lookup-panel h2 {
+            margin-top: 0;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            border-bottom: 1px dashed #ffb000;
+            padding-bottom: 5px;
+        }
+        .passport-lookup-panel .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .passport-lookup-panel input {
+            flex-grow: 1;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #0c0802;
+            border: 1px solid #ffb000;
+        }
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid #ffb000;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+        th {
+            background-color: #261a05;
+        }
+        tr:hover {
+            background-color: #211604;
+        }
+        
+        .btn {
+            background: #261a05;
+            color: #ffb000;
+            border: 1px solid #ffb000;
+            padding: 6px 12px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .btn:hover {
+            background: #ffb000;
+            color: #000;
+            text-shadow: none;
+        }
+        
+        .status-approved { color: #00ff00; font-weight: bold; text-shadow: 0 0 4px #00ff00;}
+        .status-denied { color: #ff3333; font-weight: bold; text-shadow: 0 0 4px #ff3333;}
+        .status-pending { color: #ffb000; font-weight: bold; }
+
+        .risk-low { opacity: 0.7; }
+        .risk-high {
+            color: #ff3333;
+            text-shadow: 0 0 4px #ff3333;
+            font-weight: bold;
+        }
+        .risk-state {
+            color: #ffb000;
+            background: #3a2500;
+            padding: 2px 5px;
+            font-weight: bold;
+            border: 1px solid #ffb000;
+        }
+        .risk-interpol {
+            color: #000;
+            background-color: #ffb000;
+            font-weight: bold;
+            padding: 2px 8px;
+            animation: blinker 1s steps(2, start) infinite;
+            text-shadow: none;
+        }
+        @keyframes blinker {
+            to { visibility: hidden; }
+        }
+        
+        .expiry-alert {
+            background-color: #ff3333 !important;
+            color: #000 !important;
+            padding: 2px 4px;
+            text-shadow: none !important;
+        }
+
+        .alert-banner {
+            grid-column: span 3;
+            background-color: #210000;
+            border: 2px solid #ff3333;
+            color: #ff3333;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 4px #ff3333;
+        }
+
+        /* Modal Settings */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            overflow-y: auto;
+            padding-top: 30px;
+        }
+        .modal-content {
+            background: #0c0802;
+            border: 2px solid #ffb000;
+            width: 920px;
+            margin: 0 auto 50px auto;
+            box-shadow: 0 0 20px rgba(255, 176, 0, 0.3);
+        }
+        .modal-header {
+            background: #261a05;
+            padding: 10px 20px;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ffb000;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #ffb000;
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+        .modal-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 180px 1fr 1fr;
+            gap: 15px;
+        }
+        
+        /* CRT Amber Phosphor Profile Picture Matrix Filter */
+        .photo-frame {
+            border: 2px solid #ffb000;
+            width: 150px;
+            height: 150px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            grid-row: span 3;
+            box-shadow: inset 0 0 10px #ffb000;
+        }
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Monochromatic amber CRT post-process configuration */
+            filter: grayscale(1) contrast(2) brightness(0.9) sepia(1) hue-rotate(-15deg) saturate(6);
+            mix-blend-mode: screen;
+        }
+
+        .data-group {
+            border-bottom: 1px dashed #3a2500;
+            padding-bottom: 6px;
+        }
+        .data-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: rgba(255, 176, 0, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .data-group div {
+            font-size: 0.95rem;
+        }
+        .span-2 {
+            grid-column: span 2;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .action-area {
+            padding: 20px;
+            background: #110b03;
+            border-top: 1px solid #ffb000;
+            text-align: right;
+        }
+        
+        .input-panel {
+            display: none;
+            text-align: left;
+            margin-top: 10px;
+            border-top: 1px dashed #ffb000;
+            padding-top: 15px;
+        }
+        .input-panel h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .form-grid label {
+            display: block;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SYS_TERM // IMMIGRATION_BORDER_LOGISTICS // PORT_04</h1>
+        <div id="clock">DATE: 2026-06-20 20:03_</div>
+    </header>
+
+    <div class="container">
+        
+        <div class="dashboard-grid">
+            <div class="panel controls">
+                <div class="search-box-container">
+                    <input type="text" id="searchInput" onkeyup="searchDatabase()" placeholder="SCANNING VALUE FILTER (NAME / PASSPORT)...">
+                </div>
+                <div><strong>MANIFEST SEED LOADED [100 UNITS]</strong></div>
+            </div>
+            
+            <div class="panel passport-lookup-panel">
+                <h2>MANUAL SERIAL ENTRY PULL</h2>
+                <div class="input-group">
+                    <input type="text" id="passportLookupInput" placeholder="PASSPORT SEGMENT NO." onkeydown="if(event.key==='Enter') lookupPassport()">
+                    <button class="btn" onclick="lookupPassport()">EXECUTE</button>
+                </div>
+            </div>
+        </div>
+
+        <table id="dbTable">
+            <thead>
+                <tr>
+                    <th>FIRST_NAME</th>
+                    <th>LAST_NAME</th>
+                    <th>NATIONALITY</th>
+                    <th>PASSPORT_NO</th>
+                    <th>ALERT_TAG</th>
+                    <th>CLEARANCE_STATUS</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Master Review Window -->
+    <div id="processModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>FILE_INSPECTION_BUFFER // ACCESS_DOSSIER</span>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalContent"></div>
+            
+            <div class="action-area">
+                <div id="decisionButtons">
+                    <button class="btn" style="color: #ff3333; border-color: #ff3333;" onclick="initiateDenial()">[F2] DENY ENTRY</button>
+                    <button class="btn" style="color: #00ff00; border-color: #00ff00;" onclick="initiateApproval()">[F1] ALLOW ENTRY</button>
+                </div>
+                
+                <!-- Entry Metadata Form -->
+                <div id="allowFormPanel" class="input-panel">
+                    <h3>[AUTHORIZATION REGISTER INDEX FORM]</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label>DEPARTURE NODE (ORIGIN CITY):</label>
+                            <input type="text" id="flightFrom" placeholder="e.g. Heathrow Terminal">
+                        </div>
+                        <div>
+                            <label>CARRIER / FLIGHT ID:</label>
+                            <input type="text" id="flightAirline" placeholder="e.g. BA223">
+                        </div>
+                        <div>
+                            <label>DECLARED INTENT:</label>
+                            <select id="flightReason">
+                                <option value="Tourism">Tourism</option>
+                                <option value="Business">Business</option>
+                                <option value="Transit">Transit Only</option>
+                                <option value="Diplomatic">Diplomatic Mission</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>EXPECTED RETURN ESCAPE MANDATE DATE:</label>
+                            <input type="date" id="flightDepart">
+                        </div>
+                        <div class="full-width">
+                            <label>OFFICER OPERATIONAL WATCH SYSTEM LOG NOTES:</label>
+                            <textarea id="officerApprovalNotes" style="width:100%; height:50px; resize:none;" placeholder="Log inspection parameters..."></textarea>
+                        </div>
+                    </div>
+                    <div style="text-align: right; margin-top: 15px;">
+                        <button class="btn" onclick="submitApproval()">COMMIT AUTHORIZATION ENTRY</button>
+                    </div>
+                </div>
+
+                <!-- Denial Reason Form -->
+                <div id="denyFormPanel" class="input-panel">
+                    <h3 style="color:#ff3333;">[REFUSAL ADMINISTRATIVE MANIFEST REPORT]</h3>
+                    <label style="display:block; margin-bottom:5px;">REGULATORY GROUND CODES FOR REFUSAL:</label>
+                    <textarea id="denyReasonText" style="width:100%; height:70px; resize:none;" placeholder="Input violation tracking statutes..."></textarea>
+                    <div style="text-align: right; margin-top: 15px;">
+                        <button class="btn" style="background:#ff3333; color:#000;" onclick="submitDenial()">REJECT UNIT ENTRY</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firstNames = ["James", "Maria", "John", "Wei", "Anna", "Omar", "Sophia", "David", "Emma", "Liam", "Fatima", "Carlos", "Yuki", "Chloe", "Elena"];
+        const lastNames = ["Smith", "Garcia", "Kim", "Patel", "Muller", "Singh", "Wang", "Ivanov", "Silva", "Kowalski", "Ali", "Ahmed", "Rossi"];
+        const countries = ["United Kingdom", "United States", "Canada", "Germany", "Japan", "China", "India", "Brazil", "Australia", "France", "Mexico", "Turkey"];
+        
+        const interpolOffenses = [
+            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_9912A: Suspect linked to international asset liquidation evasion.",
+            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_0041B: Identity falsification & high-yield digital transit infrastructure breach.",
+            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_7749X: Supply chain contraband transport network coordinator. HOLD IMMEDIATELY.",
+            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_5128F: Corporate extraction espionage & validation spoofing.",
+            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_1102K: High-value maritime manifest cargo theft syndicate organizer."
+        ];
+
+        const localOffenses = [
+            "WARRANT // LOCAL STATE MANDATE: Outstanding tax evasion & state-level financial flight risk warning.",
+            "WARRANT // REGIONAL LAW ADVISORY: Failure to report for regional grand jury court subpoena.",
+            "WARRANT // DOMESTIC FRAUD REGISTRATION: Bad check processing and multi-district retail theft tracking."
+        ];
+
+        const database = [];
+        const SYSTEM_DATE = new Date('2026-06-20');
+
+        function generateData() {
+            for (let i = 0; i < 100; i++) {
+                let nationality = countries[Math.floor(Math.random() * countries.length)];
+                let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                let ppNo = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26)) + Math.floor(10000 + Math.random() * 90000);
+                
+                let ppExp = Math.random() < 0.20 ? "2026-07-15" : "2029-11-12";
+                let gender = Math.random() > 0.5 ? "M" : "F";
+                
+                let histArray = [
+                    "01- ARRIVAL: 14/FEB/2024 POE_04 | ACTION: PASSED | GOAL: Tourism",
+                    "02- ARRIVAL: 03/NOV/2025 POE_02 | ACTION: PASSED | GOAL: Business"
+                ];
+
+                // Gender-mapped consistent profile generation indices
+                let photoId = Math.floor(Math.random() * 70);
+                let avatarUrl = gender === "M" 
+                    ? `https://i.pravatar.cc/150?img=${photoId % 35 + 33}` 
+                    : `https://i.pravatar.cc/150?img=${photoId % 35 + 1}`;
+
+                database.push({
+                    id: i,
+                    firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+                    lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+                    dob: "19" + Math.floor(60 + Math.random() * 35) + "-04-18",
+                    gender: gender,
+                    nationality: nationality,
+                    passportNum: ppNo,
+                    passportExpiry: ppExp,
+                    riskRating: "Clearance Normal",
+                    interpolWanted: false,
+                    localWanted: false,
+                    alertDetails: "",
+                    avatar: avatarUrl,
+                    previousVisits: histArray,
+                    status: "Pending",
+                    flightDetails: null
+                });
+            }
+            
+            // Assign exactly 5 Interpol Notices
+            let interpolIndices = [];
+            while(interpolIndices.length < 5) {
+                let rIdx = Math.floor(Math.random() * 100);
+                if(!interpolIndices.includes(rIdx)) interpolIndices.push(rIdx);
+            }
+            interpolIndices.forEach((dbIdx, i) => {
+                database[dbIdx].riskRating = "INTERPOL RED NOTICE";
+                database[dbIdx].interpolWanted = true;
+                database[dbIdx].alertDetails = interpolOffenses[i];
+            });
+
+            // Assign exactly 5 Local State Notices
+            let localIndices = [];
+            while(localIndices.length < 5) {
+                let rIdx = Math.floor(Math.random() * 100);
+                if(!interpolIndices.includes(rIdx) && !localIndices.includes(rIdx)) localIndices.push(rIdx);
+            }
+            localIndices.forEach((dbIdx) => {
+                database[dbIdx].riskRating = "LOCAL STATE WARRANT";
+                database[dbIdx].localWanted = true;
+                database[dbIdx].alertDetails = localOffenses[Math.floor(Math.random() * localOffenses.length)];
+            });
+
+            database[0].passportNum = "ABC12345";
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+            database.forEach(row => {
+                let statusClass = "status-pending";
+                if (row.status === "Approved") statusClass = "status-approved";
+                if (row.status === "Denied") statusClass = "status-denied";
+
+                let riskClass = "risk-low";
+                if (row.interpolWanted) riskClass = "risk-interpol";
+                if (row.localWanted) riskClass = "risk-state";
+
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.firstName.toUpperCase()}</td>
+                    <td>${row.lastName.toUpperCase()}</td>
+                    <td>${row.nationality.toUpperCase()}</td>
+                    <td><strong>${row.passportNum}</strong></td>
+                    <td><span class="${riskClass}">${row.riskRating}</span></td>
+                    <td class="${statusClass}">${row.status.toUpperCase()}</td>
+                    <td><button class="btn" onclick="openModal(${row.id})">VIEW</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function lookupPassport() {
+            const rawVal = document.getElementById("passportLookupInput").value.trim().toUpperCase();
+            const match = database.find(item => item.passportNum.toUpperCase() === rawVal);
+            if(match) {
+                openModal(match.id);
+                document.getElementById("passportLookupInput").value = ""; 
+            } else {
+                alert("ERR: SERIAL RECORD NOT LOCATED.");
+            }
+        }
+
+        let currentProcessingId = null;
+
+        function openModal(id) {
+            currentProcessingId = id;
+            const p = database.find(item => item.id === id);
+
+            document.getElementById("allowFormPanel").style.display = "none";
+            document.getElementById("denyFormPanel").style.display = "none";
+            document.getElementById("decisionButtons").style.display = "block";
+
+            let expDate = new Date(p.passportExpiry);
+            let passportWarningStyle = (expDate <= SYSTEM_DATE || (expDate - SYSTEM_DATE)/(1000*60*60*24) <= 180) ? "class='expiry-alert'" : "";
+
+            let html = "";
+            if(p.interpolWanted || p.localWanted) {
+                let bannerBorder = p.interpolWanted ? "#ffb000" : "#ff3333";
+                html += `
+                <div class="alert-banner" style="border-color: ${bannerBorder}; color: ${p.interpolWanted ? '#ffb000' : '#ff3333'};">
+                    <h4>⚠️ SYSTEM EXCEPTION WATCH WARNING TRIGGERED</h4>
+                    <strong>DISPATCH_MEMO:</strong> ${p.alertDetails}
+                </div>`;
+            }
+
+            html += `
+                <!-- Captured Image Signal Row -->
+                <div class="photo-frame">
+                    <img src="${p.avatar}" alt="SIGNAL_CAPTURE_FAIL">
+                </div>
+
+                <div class="data-group"><label>FIRST NAME</label><div>${p.firstName.toUpperCase()}</div></div>
+                <div class="data-group"><label>LAST NAME</label><div>${p.lastName.toUpperCase()}</div></div>
+                <div class="data-group"><label>NATIONALITY</label><div>${p.nationality.toUpperCase()}</div></div>
+                <div class="data-group"><label>PASSPORT NUMBER</label><div>${p.passportNum}</div></div>
+                <div class="data-group"><label>PASSPORT EXPIRY</label><div ${passportWarningStyle}>${p.passportExpiry}</div></div>
+                <div class="data-group"><label>DATE OF BIRTH</label><div>${p.dob}</div></div>
+                <div class="data-group span-2"><label>SYS CRITERIA THREAT RATING</label><div>${p.riskRating}</div></div>
+                <div class="data-group full-width">
+                    <label>HISTORIC CROSS-BORDER LEDGER [RECORDS FOUND]</label>
+                    <div style="background:#110b03; border:1px solid #3a2500; padding:8px; font-size:0.8rem; line-height:1.4;">
+                        ${p.previousVisits.length ? p.previousVisits.join("<br>") : "NO PRIOR TRANSIT ENTRIES DISCOVERED."}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById("modalContent").innerHTML = html;
+            document.getElementById("processModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("processModal").style.display = "none";
+        }
+
+        function initiateApproval() {
+            document.getElementById("decisionButtons").style.display = "none";
+            document.getElementById("allowFormPanel").style.display = "block";
+        }
+
+        function submitApproval() {
+            const fFrom = document.getElementById("flightFrom").value.toUpperCase();
+            const fAirline = document.getElementById("flightAirline").value.toUpperCase();
+            const fReason = document.getElementById("flightReason").value.toUpperCase();
+            
+            if(!fFrom || !fAirline) {
+                alert("REJECTED: MANIFEST FIELDS CORRUPTED OR EMPTY.");
+                return;
+            }
+
+            let p = database.find(item => item.id === currentProcessingId);
+            p.status = "Approved";
+            
+            // Add entry directly to history log array
+            let idx = p.previousVisits.length + 1;
+            let padIdx = idx < 10 ? "0" + idx : idx;
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/JUN/2026 POE_04 | ACTION: ALLOWED | FLIGHT: ${fAirline} FROM ${fFrom} | REASON: ${fReason}`);
+
+            closeModal();
+            renderTable();
+        }
+
+        function initiateDenial() {
+            document.getElementById("decisionButtons").style.display = "none";
+            document.getElementById("denyFormPanel").style.display = "block";
+        }
+
+        function submitDenial() {
+            const reason = document.getElementById("denyReasonText").value.toUpperCase();
+            if(!reason.trim()) {
+                alert("REJECTED: ADM REFUSAL CODE FIELD REQUIRED.");
+                return;
+            }
+            let p = database.find(item => item.id === currentProcessingId);
+            p.status = "Denied";
+            
+            // Add denial event to log history array
+            let idx = p.previousVisits.length + 1;
+            let padIdx = idx < 10 ? "0" + idx : idx;
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/JUN/2026 POE_04 | ACTION: ENTRY_REFUSED | BASIS CODES: ${reason}`);
+
+            closeModal();
+            renderTable();
+        }
+
+        function searchDatabase() {
+            let val = document.getElementById("searchInput").value.toUpperCase();
+            let rows = document.getElementById("tableBody").getElementsByTagName("tr");
+            for(let i=0; i<rows.length; i++) {
+                let text = rows[i].textContent || rows[i].innerText;
+                rows[i].style.display = (text.toUpperCase().indexOf(val) > -1) ? "" : "none";
+            }
+        }
+
+        generateData();
+        renderTable();
+    </script>
+</body>
+</html>
