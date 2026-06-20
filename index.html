@@ -339,7 +339,6 @@
         </table>
     </div>
 
-    <!-- Master Review Window -->
     <div id="processModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -401,10 +400,13 @@
     </div>
 
     <script>
-        const firstNames = ["James", "Maria", "John", "Wei", "Anna", "Omar", "Sophia", "David", "Emma", "Liam", "Fatima", "Carlos", "Yuki", "Chloe", "Elena"];
-        const lastNames = ["Smith", "Garcia", "Kim", "Patel", "Muller", "Singh", "Wang", "Ivanov", "Silva", "Kowalski", "Ali", "Ahmed", "Rossi"];
+        const maleFirstNames = ["James", "John", "David", "Liam", "Carlos", "Omar", "Wei", "Ivan", "Kenji", "Ahmed", "Pierre", "Hans"];
+        const femaleFirstNames = ["Maria", "Anna", "Sophia", "Emma", "Fatima", "Yuki", "Chloe", "Elena", "Mei", "Priya", "Olga", "Isabella"];
+        const lastNames = ["Smith", "Garcia", "Kim", "Patel", "Muller", "Singh", "Wang", "Ivanov", "Silva", "Kowalski", "Ali", "Ahmed", "Rossi", "Tanaka"];
         const countries = ["United Kingdom", "United States", "Canada", "Germany", "Japan", "China", "India", "Brazil", "Australia", "France", "Mexico", "Turkey"];
-        
+        const tripReasons = ["Tourism", "Business", "Transit Only", "Diplomatic Mission", "Family Visit"];
+        const pastActions = ["PASSED", "PASSED", "PASSED", "PASSED", "ENTRY_REFUSED"];
+
         const interpolOffenses = [
             "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_9912A: Primary suspect involved in cross-border asset embezzlement schemes.",
             "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_0041B: Identity document fabrication and high-yield system network exploitation.",
@@ -422,6 +424,24 @@
         const database = [];
         const SYSTEM_DATE = new Date('2026-06-20');
 
+        function getRandomPastLogs() {
+            let logs = [];
+            let iterations = Math.floor(1 + Math.random() * 3); // 1 to 3 random visits
+            for (let j = 1; j <= iterations; j++) {
+                let year = Math.floor(2021 + Math.random() * 5);
+                let day = Math.floor(1 + Math.random() * 28);
+                let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                let month = months[Math.floor(Math.random() * months.length)];
+                let poe = "POE_0" + Math.floor(1 + Math.random() * 5);
+                let action = pastActions[Math.floor(Math.random() * pastActions.length)];
+                let reason = tripReasons[Math.floor(Math.random() * tripReasons.length)];
+                
+                let indexStr = j < 10 ? "0" + j : j;
+                logs.push(`${indexStr}- ARRIVAL: ${day}/${month}/${year} ${poe} | Action: ${action} | Reason: ${reason}`);
+            }
+            return logs;
+        }
+
         function generateData() {
             for (let i = 0; i < 100; i++) {
                 let nationality = countries[Math.floor(Math.random() * countries.length)];
@@ -436,7 +456,7 @@
                 // Visa Fields
                 let visaNo = "V-" + Math.floor(100000 + Math.random() * 899999);
                 let visaClass = Math.random() > 0.4 ? "B1/B2 Temporary Visitor" : "D1 Diplomatic Mission Entry";
-                let visaIssueLoc = "EMBASSY CONSULTATE - " + countries[Math.floor(Math.random() * countries.length)].toUpperCase();
+                let visaIssueLoc = "EMBASSY CONSULATE - " + countries[Math.floor(Math.random() * countries.length)].toUpperCase();
                 let visaIssueDate = "2025-01-10";
                 let visaExp = "2027-01-10";
 
@@ -444,12 +464,12 @@
                 let age = Math.floor(22 + Math.random() * 45);
                 let dob = (2026 - age) + "-05-12";
                 
-                let histArray = [
-                    "01- ARRIVAL: 14/Feb/2024 POE_04 | Action: PASSED | Reason: Tourism",
-                    "02- ARRIVAL: 03/Nov/2025 POE_02 | Action: PASSED | Reason: Business"
-                ];
+                // Fetch random gender-matched first name
+                let firstName = gender === "M" 
+                    ? maleFirstNames[Math.floor(Math.random() * maleFirstNames.length)]
+                    : femaleFirstNames[Math.floor(Math.random() * femaleFirstNames.length)];
 
-                // Biometric passport photo simulation API (Explicitly requesting plain/white backgrounds)
+                // Passport Biometric Photo Source (Plain backgrounds matching gender)
                 let photoId = Math.floor(Math.random() * 50);
                 let avatarUrl = gender === "M" 
                     ? `https://xsgames.co/randomusers/assets/avatars/male/${photoId}.jpg`
@@ -457,7 +477,7 @@
 
                 database.push({
                     id: i,
-                    firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+                    firstName: firstName,
                     lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
                     dob: dob,
                     age: age,
@@ -477,7 +497,7 @@
                     localWanted: false,
                     alertDetails: "",
                     avatar: avatarUrl,
-                    previousVisits: histArray,
+                    previousVisits: getRandomPastLogs(),
                     status: "Pending"
                 });
             }
@@ -576,9 +596,8 @@
             }
 
             html += `
-                <!-- Passport Biometric Identification Photo Block -->
                 <div class="photo-frame">
-                    <img src="${p.avatar}" alt="Passport Photo Missing" style="filter: contrast(1.05) brightness(1.02);">
+                    <img src="${p.avatar}" alt="Passport Photo Missing" style="filter: contrast(1.03) brightness(1.01);">
                 </div>
 
                 <div class="section-heading">Biometric Personal Information</div>
@@ -636,7 +655,6 @@
             let p = database.find(item => item.id === currentProcessingId);
             p.status = "Approved";
             
-            // Record entry directly into Travel History List
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
             p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ALLOWED | Flight: ${fAirline} from ${fFrom} | Goal: ${fReason}`);
@@ -659,7 +677,6 @@
             let p = database.find(item => item.id === currentProcessingId);
             p.status = "Denied";
             
-            // Record rejection directly into Travel History List
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
             p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ENTRY_REFUSED | Ground Basis: ${reason}`);
