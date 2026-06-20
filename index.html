@@ -3,85 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL // IMMIGRATION_PORT_OF_ENTRY_v5.0</title>
+    <title>Border Control & Immigration Database Terminal</title>
     <style>
         body {
-            background-color: #0c0802;
-            color: #ffb000; /* Amber monochrome CRT phosphor glow */
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f5;
+            color: #333;
             margin: 0;
             padding: 0;
-            text-shadow: 0 0 4px rgba(255, 176, 0, 0.7);
         }
-        
-        /* Simulated Scanlines Overlay */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 9999;
-            background-size: 100% 3px, 3px 100%;
-            pointer-events: none;
-        }
-
         header {
-            background-color: #1a1103;
-            padding: 10px 20px;
+            background-color: #1a252f;
+            color: #fff;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px dashed #ffb000;
+            border-bottom: 3px solid #c0392b;
         }
         header h1 {
             margin: 0;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
         }
         .container {
             padding: 20px;
             max-width: 1500px;
             margin: auto;
         }
-        
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 1fr 380px;
+            grid-template-columns: 1fr 350px;
             gap: 20px;
             margin-bottom: 20px;
         }
-        
         .panel {
-            background: #110b03;
+            background: #fff;
             padding: 15px;
-            border: 1px solid #ffb000;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
         input[type="text"], select, textarea {
-            background: #000;
-            color: #ffb000;
-            border: 1px solid #ffb000;
-            padding: 8px;
-            font-family: 'Courier New', Courier, monospace;
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
             box-sizing: border-box;
         }
-        
-        .search-box-container input {
+        .search-box-container {
             width: 450px;
         }
-        
+        .passport-lookup-panel {
+            border: 2px solid #2c3e50;
+            background: #f8f9f9;
+        }
         .passport-lookup-panel h2 {
             margin-top: 0;
-            font-size: 1rem;
-            letter-spacing: 1px;
-            border-bottom: 1px dashed #ffb000;
+            font-size: 1.1rem;
+            color: #2c3e50;
+            text-transform: uppercase;
+            border-bottom: 2px solid #2c3e50;
             padding-bottom: 5px;
         }
         .passport-lookup-panel .input-group {
@@ -89,191 +76,198 @@
             gap: 10px;
             margin-top: 10px;
         }
-        .passport-lookup-panel input {
-            flex-grow: 1;
+        .btn-lookup {
+            background-color: #2c3e50;
+            color: white;
+            white-space: nowrap;
         }
-        
         table {
             width: 100%;
             border-collapse: collapse;
-            background: #0c0802;
-            border: 1px solid #ffb000;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         th, td {
-            padding: 10px 12px;
-            border: 1px solid #ffb000;
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
             text-align: left;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
         th {
-            background-color: #261a05;
+            background-color: #2c3e50;
+            color: #fff;
         }
         tr:hover {
-            background-color: #211604;
+            background-color: #f9fbfd;
         }
-        
         .btn {
-            background: #261a05;
-            color: #ffb000;
-            border: 1px solid #ffb000;
-            padding: 6px 12px;
-            font-family: 'Courier New', Courier, monospace;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 3px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.85rem;
             text-transform: uppercase;
         }
-        .btn:hover {
-            background: #ffb000;
-            color: #000;
-            text-shadow: none;
-        }
+        .btn-process { background-color: #2c3e50; color: white; }
+        .btn-process:hover { background-color: #34495e; }
+        .btn-approve { background-color: #27ae60; color: white; padding: 10px 20px; font-size: 1rem; }
+        .btn-deny { background-color: #c0392b; color: white; padding: 10px 20px; font-size: 1rem; }
+        .btn-submit { background-color: #2e4053; color: white; padding: 10px 20px; font-size: 1rem; }
         
-        .status-approved { color: #00ff00; font-weight: bold; text-shadow: 0 0 4px #00ff00;}
-        .status-denied { color: #ff3333; font-weight: bold; text-shadow: 0 0 4px #ff3333;}
-        .status-pending { color: #ffb000; font-weight: bold; }
-
-        .risk-low { opacity: 0.7; }
+        .status-approved { color: #27ae60; font-weight: bold; }
+        .status-denied { color: #c0392b; font-weight: bold; }
+        .status-pending { color: #f39c12; font-weight: bold; }
+        
+        .risk-low { color: #7f8c8d; }
         .risk-high {
-            color: #ff3333;
-            text-shadow: 0 0 4px #ff3333;
+            color: #c0392b;
             font-weight: bold;
+            background-color: #fdedec;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #f5b7b1;
         }
         .risk-state {
-            color: #ffb000;
-            background: #3a2500;
-            padding: 2px 5px;
+            color: #d35400;
             font-weight: bold;
-            border: 1px solid #ffb000;
+            background-color: #fef5e7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #fadbd8;
         }
         .risk-interpol {
-            color: #000;
-            background-color: #ffb000;
+            color: #fff;
             font-weight: bold;
+            background-color: #cc0000;
             padding: 2px 8px;
-            animation: blinker 1s steps(2, start) infinite;
-            text-shadow: none;
+            border-radius: 3px;
+            animation: blinker 1.5s linear infinite;
         }
-        @keyframes blinker {
-            to { visibility: hidden; }
-        }
+        @keyframes blinker { 50% { opacity: 0.5; } }
         
         .expiry-alert {
-            background-color: #ff3333 !important;
-            color: #000 !important;
-            padding: 2px 4px;
-            text-shadow: none !important;
+            color: #fff !important;
+            background-color: #c0392b !important;
+            padding: 2px 6px;
+            font-weight: bold;
+            border-radius: 3px;
+            display: inline-block;
         }
-
         .alert-banner {
-            grid-column: span 3;
-            background-color: #210000;
-            border: 2px solid #ff3333;
-            color: #ff3333;
+            grid-column: 1 / -1;
             padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.95rem;
             margin-bottom: 10px;
-            text-shadow: 0 0 4px #ff3333;
+        }
+        .alert-interpol-banner {
+            background-color: #7a0000;
+            color: #fff;
+            border-left: 8px solid #ff0000;
+        }
+        .alert-state-banner {
+            background-color: #d35400;
+            color: #fff;
+            border-left: 8px solid #e67e22;
         }
 
-        /* Modal Settings */
+        /* Modal Structure */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 1000;
             overflow-y: auto;
-            padding-top: 30px;
         }
         .modal-content {
-            background: #0c0802;
-            border: 2px solid #ffb000;
-            width: 920px;
-            margin: 0 auto 50px auto;
-            box-shadow: 0 0 20px rgba(255, 176, 0, 0.3);
+            background: #fff;
+            width: 900px;
+            margin: 2% auto;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.4);
         }
         .modal-header {
-            background: #261a05;
-            padding: 10px 20px;
-            font-size: 1rem;
+            background: #1a252f;
+            color: #fff;
+            padding: 15px 20px;
+            font-size: 1.2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #ffb000;
         }
         .close-btn {
             background: none;
             border: none;
-            color: #ffb000;
-            font-size: 1.4rem;
+            color: white;
+            font-size: 1.6rem;
             cursor: pointer;
         }
         .modal-body {
             padding: 20px;
             display: grid;
-            grid-template-columns: 180px 1fr 1fr;
+            grid-template-columns: 160px 1fr 1fr;
             gap: 15px;
+            max-height: 65vh;
+            overflow-y: auto;
         }
         
-        /* CRT Amber Phosphor Profile Picture Matrix Filter */
+        /* Professional Image Layout Frame */
         .photo-frame {
-            border: 2px solid #ffb000;
-            width: 150px;
-            height: 150px;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
             grid-row: span 3;
-            box-shadow: inset 0 0 10px #ffb000;
+            width: 140px;
+            height: 170px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            background-color: #f8f9f9;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .photo-frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* Monochromatic amber CRT post-process configuration */
-            filter: grayscale(1) contrast(2) brightness(0.9) sepia(1) hue-rotate(-15deg) saturate(6);
-            mix-blend-mode: screen;
         }
 
         .data-group {
-            border-bottom: 1px dashed #3a2500;
-            padding-bottom: 6px;
+            border-bottom: 1px solid #f2f4f4;
+            padding-bottom: 8px;
         }
         .data-group label {
             display: block;
             font-size: 0.75rem;
-            color: rgba(255, 176, 0, 0.6);
+            color: #7f8c8d;
             text-transform: uppercase;
+            font-weight: bold;
             margin-bottom: 3px;
         }
-        .data-group div {
-            font-size: 0.95rem;
-        }
-        .span-2 {
-            grid-column: span 2;
-        }
-        .full-width {
-            grid-column: 1 / -1;
-        }
+        .data-group div { font-size: 0.95rem; font-weight: 500; }
+        .span-2 { grid-column: span 2; }
+        .full-width { grid-column: 1 / -1; }
+        
         .action-area {
             padding: 20px;
-            background: #110b03;
-            border-top: 1px solid #ffb000;
+            background: #f8f9f9;
+            border-top: 1px solid #d5dbdb;
             text-align: right;
         }
-        
         .input-panel {
             display: none;
             text-align: left;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
             margin-top: 10px;
-            border-top: 1px dashed #ffb000;
-            padding-top: 15px;
         }
         .input-panel h3 {
             margin-top: 0;
-            font-size: 1rem;
-            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 5px;
         }
         .form-grid {
             display: grid;
@@ -282,7 +276,8 @@
         }
         .form-grid label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: bold;
             margin-bottom: 4px;
         }
     </style>
@@ -290,25 +285,24 @@
 <body>
 
     <header>
-        <h1>SYS_TERM // IMMIGRATION_BORDER_LOGISTICS // PORT_04</h1>
-        <div id="clock">DATE: 2026-06-20 20:03_</div>
+        <h1>IMMIGRATION BORDER CONTROL SYSTEM — PORT OF ENTRY</h1>
+        <div id="clock">SYSTEM DATE: 2026-06-20</div>
     </header>
 
     <div class="container">
-        
         <div class="dashboard-grid">
             <div class="panel controls">
                 <div class="search-box-container">
-                    <input type="text" id="searchInput" onkeyup="searchDatabase()" placeholder="SCANNING VALUE FILTER (NAME / PASSPORT)...">
+                    <input type="text" id="searchInput" onkeyup="searchDatabase()" placeholder="Type to filter manifest table below (Name, ID)...">
                 </div>
-                <div><strong>MANIFEST SEED LOADED [100 UNITS]</strong></div>
+                <div><strong>Active Dynamic Manifest: 100 Units Online</strong></div>
             </div>
             
             <div class="panel passport-lookup-panel">
-                <h2>MANUAL SERIAL ENTRY PULL</h2>
+                <h2>Direct Passport Reader Window</h2>
                 <div class="input-group">
-                    <input type="text" id="passportLookupInput" placeholder="PASSPORT SEGMENT NO." onkeydown="if(event.key==='Enter') lookupPassport()">
-                    <button class="btn" onclick="lookupPassport()">EXECUTE</button>
+                    <input type="text" id="passportLookupInput" placeholder="Enter exact passport #" onkeydown="if(event.key==='Enter') lookupPassport()">
+                    <button class="btn btn-lookup" onclick="lookupPassport()">PULL DOSSIER</button>
                 </div>
             </div>
         </div>
@@ -316,13 +310,13 @@
         <table id="dbTable">
             <thead>
                 <tr>
-                    <th>FIRST_NAME</th>
-                    <th>LAST_NAME</th>
-                    <th>NATIONALITY</th>
-                    <th>PASSPORT_NO</th>
-                    <th>ALERT_TAG</th>
-                    <th>CLEARANCE_STATUS</th>
-                    <th>ACTION</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Nationality</th>
+                    <th>Passport No.</th>
+                    <th>Risk Tag</th>
+                    <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -333,59 +327,57 @@
     <div id="processModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span>FILE_INSPECTION_BUFFER // ACCESS_DOSSIER</span>
+                <span>PASSPORT DOSSIER & SECURITY SCREENING</span>
                 <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body" id="modalContent"></div>
             
             <div class="action-area">
                 <div id="decisionButtons">
-                    <button class="btn" style="color: #ff3333; border-color: #ff3333;" onclick="initiateDenial()">[F2] DENY ENTRY</button>
-                    <button class="btn" style="color: #00ff00; border-color: #00ff00;" onclick="initiateApproval()">[F1] ALLOW ENTRY</button>
+                    <button class="btn btn-deny" onclick="initiateDenial()">DENY ENTRY</button>
+                    <button class="btn btn-approve" onclick="initiateApproval()">ALLOW ENTRY</button>
                 </div>
                 
-                <!-- Entry Metadata Form -->
                 <div id="allowFormPanel" class="input-panel">
-                    <h3>[AUTHORIZATION REGISTER INDEX FORM]</h3>
+                    <h3>Record Active Flight & Entry Details</h3>
                     <div class="form-grid">
                         <div>
-                            <label>DEPARTURE NODE (ORIGIN CITY):</label>
-                            <input type="text" id="flightFrom" placeholder="e.g. Heathrow Terminal">
+                            <label>From (Origin City/Country):</label>
+                            <input type="text" id="flightFrom" placeholder="e.g. London Heathrow">
                         </div>
                         <div>
-                            <label>CARRIER / FLIGHT ID:</label>
-                            <input type="text" id="flightAirline" placeholder="e.g. BA223">
+                            <label>Airline & Flight Number:</label>
+                            <input type="text" id="flightAirline" placeholder="e.g. British Airways BA223">
                         </div>
                         <div>
-                            <label>DECLARED INTENT:</label>
+                            <label>Trip Reason:</label>
                             <select id="flightReason">
                                 <option value="Tourism">Tourism</option>
                                 <option value="Business">Business</option>
                                 <option value="Transit">Transit Only</option>
-                                <option value="Diplomatic">Diplomatic Mission</option>
+                                <option value="Diplomatic">Diplomatic</option>
                             </select>
                         </div>
                         <div>
-                            <label>EXPECTED RETURN ESCAPE MANDATE DATE:</label>
+                            <label>Planning to Depart:</label>
                             <input type="date" id="flightDepart">
                         </div>
                         <div class="full-width">
-                            <label>OFFICER OPERATIONAL WATCH SYSTEM LOG NOTES:</label>
-                            <textarea id="officerApprovalNotes" style="width:100%; height:50px; resize:none;" placeholder="Log inspection parameters..."></textarea>
+                            <label style="color:#27ae60;">Officer Operational Watchlist Notes:</label>
+                            <textarea id="officerApprovalNotes" style="height:50px; resize:none;" placeholder="Log standard border query notes here..."></textarea>
                         </div>
                     </div>
                     <div style="text-align: right; margin-top: 15px;">
-                        <button class="btn" onclick="submitApproval()">COMMIT AUTHORIZATION ENTRY</button>
+                        <button class="btn btn-submit" onclick="submitApproval()">SAVE & AUTHORIZE ENTRY</button>
                     </div>
                 </div>
 
-                <!-- Denial Reason Form -->
                 <div id="denyFormPanel" class="input-panel">
-                    <h3 style="color:#ff3333;">[REFUSAL ADMINISTRATIVE MANIFEST REPORT]</h3>
-                    <label style="display:block; margin-bottom:5px;">REGULATORY GROUND CODES FOR REFUSAL:</label>
-                    <textarea id="denyReasonText" style="width:100%; height:70px; resize:none;" placeholder="Input violation tracking statutes..."></textarea>
+                    <h3 style="color:#c0392b;">Refusal of Entry Documentation</h3>
+                    <label style="font-weight:bold; display:block; margin-bottom:5px;">Reason for Denial:</label>
+                    <textarea id="denyReasonText" style="width:100%; height:60px; padding:8px; border:1px solid #ccc; resize:none;" placeholder="Specify clear regulatory basis or system violations..."></textarea>
                     <div style="text-align: right; margin-top: 15px;">
-                        <button class="btn" style="background:#ff3333; color:#000;" onclick="submitDenial()">REJECT UNIT ENTRY</button>
+                        <button class="btn btn-submit" style="background:#000; color:#fff;" onclick="submitDenial()">REJECT ENTRY</button>
                     </div>
                 </div>
             </div>
@@ -398,17 +390,17 @@
         const countries = ["United Kingdom", "United States", "Canada", "Germany", "Japan", "China", "India", "Brazil", "Australia", "France", "Mexico", "Turkey"];
         
         const interpolOffenses = [
-            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_9912A: Suspect linked to international asset liquidation evasion.",
-            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_0041B: Identity falsification & high-yield digital transit infrastructure breach.",
-            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_7749X: Supply chain contraband transport network coordinator. HOLD IMMEDIATELY.",
-            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_5128F: Corporate extraction espionage & validation spoofing.",
-            "CRITICAL // INTERPOL RED NOTICE // CASE_REF_1102K: High-value maritime manifest cargo theft syndicate organizer."
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_9912A: Primary suspect involved in cross-border asset embezzlement schemes.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_0041B: Identity document fabrication and high-yield system network exploitation.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_7749X: Supply chain contraband logistics supervisor. Detain instantly.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_5128F: Corporate database infiltration and unauthorized system extraction.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_1102K: High-value maritime port cargo transit tracking warrant."
         ];
 
         const localOffenses = [
-            "WARRANT // LOCAL STATE MANDATE: Outstanding tax evasion & state-level financial flight risk warning.",
-            "WARRANT // REGIONAL LAW ADVISORY: Failure to report for regional grand jury court subpoena.",
-            "WARRANT // DOMESTIC FRAUD REGISTRATION: Bad check processing and multi-district retail theft tracking."
+            "LOCAL STATE WARRANT: Outstanding state-level grand jury evasion & corporate tax avoidance tracking.",
+            "LOCAL STATE WARRANT: Domestic processing check default and multi-district retail fraud validation.",
+            "LOCAL STATE WARRANT: Failure to appear for regional court subpoena regarding asset manipulation fields."
         ];
 
         const database = [];
@@ -419,26 +411,25 @@
                 let nationality = countries[Math.floor(Math.random() * countries.length)];
                 let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                 let ppNo = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26)) + Math.floor(10000 + Math.random() * 90000);
-                
                 let ppExp = Math.random() < 0.20 ? "2026-07-15" : "2029-11-12";
                 let gender = Math.random() > 0.5 ? "M" : "F";
                 
                 let histArray = [
-                    "01- ARRIVAL: 14/FEB/2024 POE_04 | ACTION: PASSED | GOAL: Tourism",
-                    "02- ARRIVAL: 03/NOV/2025 POE_02 | ACTION: PASSED | GOAL: Business"
+                    "01- ARRIVAL: 14/Feb/2024 POE_04 | Action: PASSED | Reason: Tourism",
+                    "02- ARRIVAL: 03/Nov/2025 POE_02 | Action: PASSED | Reason: Business"
                 ];
 
-                // Gender-mapped consistent profile generation indices
-                let photoId = Math.floor(Math.random() * 70);
+                // Pull professional corporate passport profile photos safely mapped to gender
+                let photoId = Math.floor(Math.random() * 35);
                 let avatarUrl = gender === "M" 
-                    ? `https://i.pravatar.cc/150?img=${photoId % 35 + 33}` 
-                    : `https://i.pravatar.cc/150?img=${photoId % 35 + 1}`;
+                    ? `https://i.pravatar.cc/150?img=${photoId + 33}` 
+                    : `https://i.pravatar.cc/150?img=${photoId + 1}`;
 
                 database.push({
                     id: i,
                     firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
                     lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
-                    dob: "19" + Math.floor(60 + Math.random() * 35) + "-04-18",
+                    dob: "19" + Math.floor(60 + Math.random() * 35) + "-05-12",
                     gender: gender,
                     nationality: nationality,
                     passportNum: ppNo,
@@ -449,12 +440,11 @@
                     alertDetails: "",
                     avatar: avatarUrl,
                     previousVisits: histArray,
-                    status: "Pending",
-                    flightDetails: null
+                    status: "Pending"
                 });
             }
             
-            // Assign exactly 5 Interpol Notices
+            // Inject Interpol notices
             let interpolIndices = [];
             while(interpolIndices.length < 5) {
                 let rIdx = Math.floor(Math.random() * 100);
@@ -466,7 +456,7 @@
                 database[dbIdx].alertDetails = interpolOffenses[i];
             });
 
-            // Assign exactly 5 Local State Notices
+            // Inject Local warrants
             let localIndices = [];
             while(localIndices.length < 5) {
                 let rIdx = Math.floor(Math.random() * 100);
@@ -495,13 +485,13 @@
 
                 let tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td>${row.firstName.toUpperCase()}</td>
-                    <td>${row.lastName.toUpperCase()}</td>
-                    <td>${row.nationality.toUpperCase()}</td>
+                    <td>${row.firstName}</td>
+                    <td>${row.lastName}</td>
+                    <td>${row.nationality}</td>
                     <td><strong>${row.passportNum}</strong></td>
                     <td><span class="${riskClass}">${row.riskRating}</span></td>
-                    <td class="${statusClass}">${row.status.toUpperCase()}</td>
-                    <td><button class="btn" onclick="openModal(${row.id})">VIEW</button></td>
+                    <td class="${statusClass}">${row.status}</td>
+                    <td><button class="btn btn-process" onclick="openModal(${row.id})">Review File</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -514,7 +504,7 @@
                 openModal(match.id);
                 document.getElementById("passportLookupInput").value = ""; 
             } else {
-                alert("ERR: SERIAL RECORD NOT LOCATED.");
+                alert("PASSPORT ERROR: Serial ID mismatch or not in ledger database.");
             }
         }
 
@@ -532,32 +522,37 @@
             let passportWarningStyle = (expDate <= SYSTEM_DATE || (expDate - SYSTEM_DATE)/(1000*60*60*24) <= 180) ? "class='expiry-alert'" : "";
 
             let html = "";
-            if(p.interpolWanted || p.localWanted) {
-                let bannerBorder = p.interpolWanted ? "#ffb000" : "#ff3333";
+            if(p.interpolWanted) {
                 html += `
-                <div class="alert-banner" style="border-color: ${bannerBorder}; color: ${p.interpolWanted ? '#ffb000' : '#ff3333'};">
-                    <h4>⚠️ SYSTEM EXCEPTION WATCH WARNING TRIGGERED</h4>
-                    <strong>DISPATCH_MEMO:</strong> ${p.alertDetails}
+                <div class="alert-banner alert-interpol-banner">
+                    <strong>🚨 MATCH LOGGED: ${p.alertDetails}</strong><br>
+                    <span>ACTION CRITERIA: SECURE TRAVELER IDENTITY DETAILS AND CONTACT IMMIGRATION CONTROL IMMEDIATE DISPATCH.</span>
+                </div>`;
+            } else if (p.localWanted) {
+                html += `
+                <div class="alert-banner alert-state-banner">
+                    <strong>⚠️ DOMESTIC ALERT DETECTED: ${p.alertDetails}</strong><br>
+                    <span>ACTION CRITERIA: FLAG SYSTEM INTERNAL FILES AND ESCALATE FOR EXTENDED ENTRY QUESTIONING.</span>
                 </div>`;
             }
 
             html += `
-                <!-- Captured Image Signal Row -->
+                <!-- Passport Photographic Reference Block -->
                 <div class="photo-frame">
-                    <img src="${p.avatar}" alt="SIGNAL_CAPTURE_FAIL">
+                    <img src="${p.avatar}" alt="Passport Photo Missing">
                 </div>
 
-                <div class="data-group"><label>FIRST NAME</label><div>${p.firstName.toUpperCase()}</div></div>
-                <div class="data-group"><label>LAST NAME</label><div>${p.lastName.toUpperCase()}</div></div>
-                <div class="data-group"><label>NATIONALITY</label><div>${p.nationality.toUpperCase()}</div></div>
-                <div class="data-group"><label>PASSPORT NUMBER</label><div>${p.passportNum}</div></div>
-                <div class="data-group"><label>PASSPORT EXPIRY</label><div ${passportWarningStyle}>${p.passportExpiry}</div></div>
-                <div class="data-group"><label>DATE OF BIRTH</label><div>${p.dob}</div></div>
-                <div class="data-group span-2"><label>SYS CRITERIA THREAT RATING</label><div>${p.riskRating}</div></div>
+                <div class="data-group"><label>First Name</label><div>${p.firstName}</div></div>
+                <div class="data-group"><label>Last Name</label><div>${p.lastName}</div></div>
+                <div class="data-group"><label>Nationality</label><div>${p.nationality}</div></div>
+                <div class="data-group"><label>Passport Number</label><div>${p.passportNum}</div></div>
+                <div class="data-group"><label>Passport Expiration</label><div ${passportWarningStyle}>${p.passportExpiry}</div></div>
+                <div class="data-group"><label>Date of Birth</label><div>${p.dob}</div></div>
+                <div class="data-group span-2"><label>System Risk Assessment</label><div>${p.riskRating}</div></div>
                 <div class="data-group full-width">
-                    <label>HISTORIC CROSS-BORDER LEDGER [RECORDS FOUND]</label>
-                    <div style="background:#110b03; border:1px solid #3a2500; padding:8px; font-size:0.8rem; line-height:1.4;">
-                        ${p.previousVisits.length ? p.previousVisits.join("<br>") : "NO PRIOR TRANSIT ENTRIES DISCOVERED."}
+                    <label>Historic Cross-Border Ledger [Travel History]</label>
+                    <div style="background:#fafafa; border:1px solid #ddd; padding:8px; font-size:0.85rem; line-height:1.5; font-family:monospace;">
+                        ${p.previousVisits.length ? p.previousVisits.join("<br>") : "NO PRIOR TRANSIT ENTRIES RECORDED."}
                     </div>
                 </div>
             `;
@@ -576,22 +571,22 @@
         }
 
         function submitApproval() {
-            const fFrom = document.getElementById("flightFrom").value.toUpperCase();
-            const fAirline = document.getElementById("flightAirline").value.toUpperCase();
-            const fReason = document.getElementById("flightReason").value.toUpperCase();
+            const fFrom = document.getElementById("flightFrom").value;
+            const fAirline = document.getElementById("flightAirline").value;
+            const fReason = document.getElementById("flightReason").value;
             
             if(!fFrom || !fAirline) {
-                alert("REJECTED: MANIFEST FIELDS CORRUPTED OR EMPTY.");
+                alert("Missing entry metadata parameters.");
                 return;
             }
 
             let p = database.find(item => item.id === currentProcessingId);
             p.status = "Approved";
             
-            // Add entry directly to history log array
+            // Directly record entry into Travel History List
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
-            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/JUN/2026 POE_04 | ACTION: ALLOWED | FLIGHT: ${fAirline} FROM ${fFrom} | REASON: ${fReason}`);
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ALLOWED | Flight: ${fAirline} from ${fFrom} | Goal: ${fReason}`);
 
             closeModal();
             renderTable();
@@ -603,18 +598,18 @@
         }
 
         function submitDenial() {
-            const reason = document.getElementById("denyReasonText").value.toUpperCase();
+            const reason = document.getElementById("denyReasonText").value;
             if(!reason.trim()) {
-                alert("REJECTED: ADM REFUSAL CODE FIELD REQUIRED.");
+                alert("An administrative reason field is mandatory.");
                 return;
             }
             let p = database.find(item => item.id === currentProcessingId);
             p.status = "Denied";
             
-            // Add denial event to log history array
+            // Record rejection directly into Travel History List
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
-            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/JUN/2026 POE_04 | ACTION: ENTRY_REFUSED | BASIS CODES: ${reason}`);
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ENTRY_REFUSED | Ground Basis: ${reason}`);
 
             closeModal();
             renderTable();
