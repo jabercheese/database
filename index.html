@@ -48,7 +48,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        input[type="text"], select, textarea {
+        input[type="text"], input[type="password"], select, textarea {
             width: 100%;
             padding: 10px;
             font-size: 1rem;
@@ -121,33 +121,9 @@
         .status-pending { color: #7f8c8d; font-weight: bold; }
         .status-questioning { color: #d35400; font-weight: bold; background-color: #fef5e7; padding: 3px 6px; border-radius: 3px; border: 1px solid #fdebd0;}
         
-        .risk-low { color: #7f8c8d; }
-        .risk-high {
-            color: #c0392b;
-            font-weight: bold;
-            background-color: #fdedec;
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 1px solid #f5b7b1;
-        }
-        .risk-state {
-            color: #d35400;
-            font-weight: bold;
-            background-color: #fef5e7;
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 1px solid #fadbd8;
-        }
-        .risk-interpol {
-            color: #fff;
-            font-weight: bold;
-            background-color: #cc0000;
-            padding: 2px 8px;
-            border-radius: 3px;
-            animation: blinker 1.5s linear infinite;
-        }
-        @keyframes blinker { 50% { opacity: 0.5; } }
-        
+        .eval-ok { color: #27ae60; font-weight: bold; }
+        .eval-hold { color: #d35400; font-weight: bold; background-color: #fef5e7; padding: 2px 6px; border-radius: 3px; }
+
         .expiry-alert {
             color: #fff !important;
             background-color: #c0392b !important;
@@ -217,9 +193,8 @@
             overflow-y: auto;
         }
         
-        /* Passport Style Biometric Photo Frame */
         .photo-frame {
-            grid-row: span 5;
+            grid-row: span 4;
             width: 160px;
             height: 200px;
             border: 2px solid #7f8c8d;
@@ -235,7 +210,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            background-color: #ffffff;
         }
 
         .data-group {
@@ -297,13 +271,21 @@
             font-weight: bold;
             margin-bottom: 4px;
         }
+        .auth-panel {
+            background: #fdf2e9;
+            border: 1px solid #f5cba7;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: left;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>IMMIGRATION BORDER CONTROL SYSTEM — POE GLOBAL MANAGEMENT ADVISOR</h1>
-        <div id="clock">SYSTEM DATE: 2026-06-20</div>
+        <div id="clock">SYSTEM DATE: 2026-06-21</div>
     </header>
 
     <div class="container">
@@ -332,7 +314,7 @@
                     <th>Nationality</th>
                     <th>Passport No.</th>
                     <th>Visa Reference</th>
-                    <th>Risk Tag</th>
+                    <th>System Pre-Check Evaluation</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -341,20 +323,31 @@
         </table>
     </div>
 
-    <!-- Master Review Window -->
     <div id="processModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <span>PASSPORT DOSSIER & SECURITY SCREENING VERIFICATION</span>
                 <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
-            <div class="modal-body" id="modalContent"></div>
+            
+            <div id="modalLayoutContainer">
+                <div class="modal-body" id="modalContent"></div>
+            </div>
             
             <div class="action-area">
-                <div id="decisionButtons">
-                    <button class="btn btn-deny" onclick="initiateDenial()">DENY ENTRY</button>
-                    <button class="btn btn-hold" onclick="initiateQuestioning()">EXTENDED QUESTIONING</button>
-                    <button class="btn btn-approve" onclick="initiateApproval()">ALLOW ENTRY</button>
+                <div id="managerAuthGate" class="auth-panel" style="display:none;">
+                    <h4 style="color:#e67e22; margin:0 0 10px 0; font-size:1rem;">🔑 SECURE GATEWAY: AUTHORIZED ACCESS PROTOCOLS REQUIRED</h4>
+                    <p style="margin:0 0 10px 0; font-size:0.85rem; color:#7e5109;">This file contains operational holds. Enter Supervisor/Manager credentials to review background history and authorize actions.</p>
+                    <div style="display:flex; gap:10px;">
+                        <input type="password" id="mgrPasswordInput" placeholder="Enter terminal override password..." style="max-width:300px;">
+                        <button class="btn btn-submit" onclick="verifyManagerOverride()">VERIFY IDENTITY</button>
+                    </div>
+                </div>
+
+                <div id="decisionButtons" style="display:none;">
+                    <button class="btn btn-deny" id="actionDenyBtn" onclick="initiateDenial()">DENY ENTRY</button>
+                    <button class="btn btn-hold" id="actionHoldBtn" onclick="initiateQuestioning()">EXTENDED QUESTIONING</button>
+                    <button class="btn btn-approve" id="actionApproveBtn" onclick="initiateApproval()">ALLOW ENTRY</button>
                 </div>
                 
                 <div id="allowFormPanel" class="input-panel">
@@ -400,7 +393,6 @@
                     </div>
                 </div>
 
-                <!-- NEW: Extended Questioning Routing Panel -->
                 <div id="questioningFormPanel" class="input-panel">
                     <h3 style="color:#e67e22;">Detainment & Investigative Dispatch Transfer</h3>
                     <div class="form-grid">
@@ -417,7 +409,7 @@
                         </div>
                         <div class="full-width" style="margin-top: 10px;">
                             <label style="font-weight:bold;">Probable Cause & Interview Focus Details:</label>
-                            <textarea id="questioningDetailsText" style="height:70px; resize:none;" placeholder="Specify exactly why this traveler is flagged for interrogation (e.g., luggage discrepancies, suspect identity timeline, outstanding support warrants)..."></textarea>
+                            <textarea id="questioningDetailsText" style="height:70px; resize:none;" placeholder="Specify exactly why this traveler is flagged for interrogation..."></textarea>
                         </div>
                     </div>
                     <div style="text-align: right; margin-top: 15px;">
@@ -441,17 +433,29 @@
             "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_0041B: Identity document fabrication and high-yield system network exploitation.",
             "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_7749X: Supply chain contraband logistics supervisor. Detain instantly.",
             "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_5128F: Corporate database infiltration and unauthorized system extraction.",
-            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_1102K: High-value maritime port cargo transit tracking warrant."
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_1102K: High-value maritime port cargo transit tracking warrant.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_2281P: Strategic technology blueprint theft and unlawful delivery channels.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_6019M: Financial institution system extortion coordinator.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_8811Z: International cargo manifest manipulation and transit falsification.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_3342D: Extradition warrant regarding complex multi-state corporate liquidation scams.",
+            "CRITICAL ALERT: INTERPOL RED NOTICE // CASE_REF_1092W: Cyber intelligence node exploitation and infrastructure vandalism."
         ];
 
         const localOffenses = [
             "LOCAL STATE WARRANT: Outstanding state-level grand jury evasion & corporate tax avoidance tracking.",
             "LOCAL STATE WARRANT: Domestic processing check default and multi-district retail fraud validation.",
-            "LOCAL STATE WARRANT: Failure to appear for regional court subpoena regarding asset manipulation fields."
+            "LOCAL STATE WARRANT: Failure to appear for regional court subpoena regarding asset manipulation fields.",
+            "LOCAL STATE WARRANT: Family court mandate breach and ongoing domestic obligation evasion tracking.",
+            "LOCAL STATE WARRANT: Unresolved municipal tax assessment default and asset freeze directives.",
+            "LOCAL STATE WARRANT: Commercial property lease conversion deception indictments.",
+            "LOCAL STATE WARRANT: Multi-county checks processing deception and identity logging failures.",
+            "LOCAL STATE WARRANT: Regional transport asset safety validation tampering investigation fields.",
+            "LOCAL STATE WARRANT: District labor standards circumvention tracking database match.",
+            "LOCAL STATE WARRANT: Non-payment of domestic support requirements registry alert."
         ];
 
         const database = [];
-        const SYSTEM_DATE = new Date('2026-06-20');
+        const SYSTEM_DATE = new Date('2026-06-21');
 
         function getRandomPastLogs() {
             let logs = [];
@@ -518,6 +522,7 @@
                     visaIssueDate: visaIssueDate,
                     visaExpiry: visaExp,
                     riskRating: "Clearance Normal",
+                    requiresManager: false,
                     interpolWanted: false,
                     localWanted: false,
                     alertDetails: "",
@@ -527,29 +532,31 @@
                 });
             }
             
+            // Inject Interpol notices (10 total now)
             let interpolIndices = [];
-            while(interpolIndices.length < 5) {
+            while(interpolIndices.length < 10) {
                 let rIdx = Math.floor(Math.random() * 100);
                 if(!interpolIndices.includes(rIdx)) interpolIndices.push(rIdx);
             }
             interpolIndices.forEach((dbIdx, i) => {
                 database[dbIdx].riskRating = "INTERPOL RED NOTICE";
+                database[dbIdx].requiresManager = true;
                 database[dbIdx].interpolWanted = true;
                 database[dbIdx].alertDetails = interpolOffenses[i];
             });
 
+            // Inject Local warrants (10 total now)
             let localIndices = [];
-            while(localIndices.length < 5) {
+            while(localIndices.length < 10) {
                 let rIdx = Math.floor(Math.random() * 100);
                 if(!interpolIndices.includes(rIdx) && !localIndices.includes(rIdx)) localIndices.push(rIdx);
             }
-            localIndices.forEach((dbIdx) => {
+            localIndices.forEach((dbIdx, i) => {
                 database[dbIdx].riskRating = "LOCAL STATE WARRANT";
+                database[dbIdx].requiresManager = true;
                 database[dbIdx].localWanted = true;
-                database[dbIdx].alertDetails = localOffenses[Math.floor(Math.random() * localOffenses.length)];
+                database[dbIdx].alertDetails = localOffenses[i];
             });
-
-            database[0].passportNum = "ABC12345";
         }
 
         function renderTable() {
@@ -561,9 +568,9 @@
                 if (row.status === "Denied") statusClass = "status-denied";
                 if (row.status === "Questioning") statusClass = "status-questioning";
 
-                let riskClass = "risk-low";
-                if (row.interpolWanted) riskClass = "risk-interpol";
-                if (row.localWanted) riskClass = "risk-state";
+                let preCheckStr = row.requiresManager 
+                    ? `<span class="eval-hold">⚠️ REQUIRES MANAGER CHECK</span>` 
+                    : `<span class="eval-ok">✅ OK TO ENTER</span>`;
 
                 let tr = document.createElement("tr");
                 tr.innerHTML = `
@@ -572,7 +579,7 @@
                     <td>${row.nationality}</td>
                     <td><strong>${row.passportNum}</strong></td>
                     <td><code>${row.visaNum}</code></td>
-                    <td><span class="${riskClass}">${row.riskRating}</span></td>
+                    <td>${preCheckStr}</td>
                     <td><span class="${statusClass}">${row.status}</span></td>
                     <td><button class="btn btn-process" onclick="openModal(${row.id})">Review File</button></td>
                 `;
@@ -595,12 +602,70 @@
 
         function openModal(id) {
             currentProcessingId = id;
-            const p = database.find(item => item.id === id);
+            document.getElementById("mgrPasswordInput").value = "";
+            buildOfficerLayer();
+            document.getElementById("processModal").style.display = "block";
+        }
+
+        // LAYER 1: Officer View (Basic fields only, restricts actions based on safety assessment)
+        function buildOfficerLayer() {
+            const p = database.find(item => item.id === currentProcessingId);
 
             document.getElementById("allowFormPanel").style.display = "none";
             document.getElementById("denyFormPanel").style.display = "none";
             document.getElementById("questioningFormPanel").style.display = "none";
+
+            if (p.requiresManager) {
+                document.getElementById("managerAuthGate").style.display = "block";
+                document.getElementById("decisionButtons").style.display = "none";
+            } else {
+                document.getElementById("managerAuthGate").style.display = "none";
+                document.getElementById("decisionButtons").style.display = "block";
+                // Employee restriction: can only toggle access confirmation details for clear profiles
+                document.getElementById("actionApproveBtn").style.display = "inline-block";
+                document.getElementById("actionDenyBtn").style.display = "none";
+                document.getElementById("actionHoldBtn").style.display = "none";
+            }
+
+            let html = `
+                <div class="photo-frame">
+                    <img src="${p.avatar}" alt="Biometric Photo Asset Loaded">
+                </div>
+                <div class="section-heading">Officer Core Verification Deck</div>
+                <div class="data-group"><label>First Name</label><div>${p.firstName}</div></div>
+                <div class="data-group"><label>Last Name</label><div>${p.lastName}</div></div>
+                <div class="data-group"><label>Nationality</label><div>${p.nationality}</div></div>
+                <div class="data-group"><label>Passport Number</label><div><strong>${p.passportNum}</strong></div></div>
+                <div class="data-group"><label>Gender</label><div>${p.gender === 'M' ? 'Male (M)' : 'Female (F)'}</div></div>
+                <div class="data-group span-2"><label>System Routing Instructions</label>
+                    <div style="font-size:1.05rem; font-weight:bold; margin-top:4px;">
+                        ${p.requiresManager ? '❌ ENTRY SUSPENDED — SIGNAL DESK SUPERVISOR FOR SYSTEM TERMINAL OVERRIDE' : '✅ STAND-BY CLEARANCE: AUTHORIZE DISPATCH LOGS'}
+                    </div>
+                </div>
+            `;
+            document.getElementById("modalContent").innerHTML = html;
+        }
+
+        // Pass Verification to trigger LAYER 2
+        function verifyManagerOverride() {
+            const entryPass = document.getElementById("mgrPasswordInput").value;
+            if(entryPass === "jab1234jab") {
+                document.getElementById("managerAuthGate").style.display = "none";
+                buildManagerLayer();
+            } else {
+                alert("ACCESS VIOLATION: Invalid credentials logged.");
+            }
+        }
+
+        // LAYER 2: Manager View (Exposes full dossiers, reasons, and unlock elements)
+        function buildManagerLayer() {
+            const p = database.find(item => item.id === currentProcessingId);
+
             document.getElementById("decisionButtons").style.display = "block";
+            // Manager privileges enabled: allow/reject exceptions active
+            document.getElementById("actionApproveBtn").style.display = "inline-block";
+            document.getElementById("actionDenyBtn").style.display = "inline-block";
+            document.getElementById("actionHoldBtn").style.display = "inline-block";
 
             let expDate = new Date(p.passportExpiry);
             let passportWarningStyle = (expDate <= SYSTEM_DATE || (expDate - SYSTEM_DATE)/(1000*60*60*24) <= 180) ? "class='expiry-alert'" : "";
@@ -610,28 +675,28 @@
                 html += `
                 <div class="alert-banner alert-interpol-banner">
                     <strong>🚨 MATCH LOGGED: ${p.alertDetails}</strong><br>
-                    <span>ACTION CRITERIA: SECURE TRAVELER IDENTITY DETAILS AND CONTACT IMMIGRATION CONTROL IMMEDIATE DISPATCH.</span>
+                    <span>ACTION CRITERIA: MANAGER ELEVATION UNLOCKED. PROCEED WITH REJECTION PROTOCOL OR ESCALATED INTERROGATION TRANSFER.</span>
                 </div>`;
             } else if (p.localWanted) {
                 html += `
                 <div class="alert-banner alert-state-banner">
                     <strong>⚠️ DOMESTIC ALERT DETECTED: ${p.alertDetails}</strong><br>
-                    <span>ACTION CRITERIA: FLAG SYSTEM INTERNAL FILES AND ESCALATE FOR EXTENDED ENTRY QUESTIONING.</span>
+                    <span>ACTION CRITERIA: OUTSTANDING STATE DECREE IN EFFECT. EVALUATE TARGET DEPT FOR IMMEDIATE ROUTING.</span>
                 </div>`;
             }
 
             html += `
                 <div class="photo-frame">
-                    <img src="${p.avatar}" alt="Passport Photo Missing" style="filter: contrast(1.03) brightness(1.01);">
+                    <img src="${p.avatar}" alt="Biometric Photo">
                 </div>
 
-                <div class="section-heading">Biometric Personal Information</div>
+                <div class="section-heading">Biometric Personal Information [SUPERVISOR EXTENSION]</div>
                 <div class="data-group"><label>First Name</label><div>${p.firstName}</div></div>
                 <div class="data-group"><label>Last Name</label><div>${p.lastName}</div></div>
                 <div class="data-group"><label>Nationality</label><div>${p.nationality}</div></div>
                 <div class="data-group"><label>Date of Birth / Age</label><div>${p.dob} (Age: ${p.age})</div></div>
                 <div class="data-group"><label>Gender</label><div>${p.gender === 'M' ? 'Male (M)' : 'Female (F)'}</div></div>
-                <div class="data-group"><label>System Risk Assessment</label><div>${p.riskRating}</div></div>
+                <div class="data-group"><label>Detailed System Risk Assessment</label><div style="color:#cc0000; font-weight:bold;">${p.riskRating}</div></div>
 
                 <div class="section-heading">Primary Passport Register Logs</div>
                 <div class="data-group"><label>Passport Number</label><div><strong>${p.passportNum}</strong></div></div>
@@ -655,7 +720,6 @@
             `;
 
             document.getElementById("modalContent").innerHTML = html;
-            document.getElementById("processModal").style.display = "block";
         }
 
         function closeModal() {
@@ -682,7 +746,7 @@
             
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
-            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ALLOWED | Flight: ${fAirline} from ${fFrom} | Goal: ${fReason}`);
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 21/Jun/2026 POE_04 | Action: ALLOWED | Flight: ${fAirline} from ${fFrom} | Goal: ${fReason}`);
 
             closeModal();
             renderTable();
@@ -704,13 +768,12 @@
             
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
-            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ENTRY_REFUSED | Ground Basis: ${reason}`);
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 21/Jun/2026 POE_04 | Action: ENTRY_REFUSED | Ground Basis: ${reason}`);
 
             closeModal();
             renderTable();
         }
 
-        // NEW: Form activation and entry logic for Questioning Route
         function initiateQuestioning() {
             document.getElementById("decisionButtons").style.display = "none";
             document.getElementById("questioningFormPanel").style.display = "block";
@@ -730,7 +793,7 @@
             
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
-            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: DETAINED / DETOUR FOR EXTENDED QUESTIONING | Unit: ${targetDept} | Basis: ${detailsText}`);
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 21/Jun/2026 POE_04 | Action: DETAINED / DETOUR FOR EXTENDED QUESTIONING | Unit: ${targetDept} | Basis: ${detailsText}`);
 
             closeModal();
             renderTable();
