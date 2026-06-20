@@ -111,13 +111,15 @@
         }
         .btn-process { background-color: #2c3e50; color: white; }
         .btn-process:hover { background-color: #34495e; }
-        .btn-approve { background-color: #27ae60; color: white; padding: 10px 20px; font-size: 1rem; }
-        .btn-deny { background-color: #c0392b; color: white; padding: 10px 20px; font-size: 1rem; }
+        .btn-approve { background-color: #27ae60; color: white; padding: 10px 20px; font-size: 1rem; margin-right: 5px;}
+        .btn-deny { background-color: #c0392b; color: white; padding: 10px 20px; font-size: 1rem; margin-right: 5px;}
+        .btn-hold { background-color: #f39c12; color: white; padding: 10px 20px; font-size: 1rem; }
         .btn-submit { background-color: #2e4053; color: white; padding: 10px 20px; font-size: 1rem; }
         
         .status-approved { color: #27ae60; font-weight: bold; }
         .status-denied { color: #c0392b; font-weight: bold; }
-        .status-pending { color: #f39c12; font-weight: bold; }
+        .status-pending { color: #7f8c8d; font-weight: bold; }
+        .status-questioning { color: #d35400; font-weight: bold; background-color: #fef5e7; padding: 3px 6px; border-radius: 3px; border: 1px solid #fdebd0;}
         
         .risk-low { color: #7f8c8d; }
         .risk-high {
@@ -339,6 +341,7 @@
         </table>
     </div>
 
+    <!-- Master Review Window -->
     <div id="processModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -350,6 +353,7 @@
             <div class="action-area">
                 <div id="decisionButtons">
                     <button class="btn btn-deny" onclick="initiateDenial()">DENY ENTRY</button>
+                    <button class="btn btn-hold" onclick="initiateQuestioning()">EXTENDED QUESTIONING</button>
                     <button class="btn btn-approve" onclick="initiateApproval()">ALLOW ENTRY</button>
                 </div>
                 
@@ -395,6 +399,31 @@
                         <button class="btn btn-submit" style="background:#000; color:#fff;" onclick="submitDenial()">REJECT ENTRY</button>
                     </div>
                 </div>
+
+                <!-- NEW: Extended Questioning Routing Panel -->
+                <div id="questioningFormPanel" class="input-panel">
+                    <h3 style="color:#e67e22;">Detainment & Investigative Dispatch Transfer</h3>
+                    <div class="form-grid">
+                        <div class="full-width">
+                            <label style="font-weight:bold;">Target Interrogation/Investigating Department:</label>
+                            <select id="questioningDept">
+                                <option value="Department of Customs & Contraband">Department of Customs & Contraband</option>
+                                <option value="Department of Visas & Identity Authentication">Department of Visas & Identity Verification</option>
+                                <option value="Department of Child Support & Minors Security">Department of Child Support & Family Liaison</option>
+                                <option value="INTERPOL Counter-Trafficking Division">INTERPOL Command Counter-Fraud Unit</option>
+                                <option value="National Counter-Terrorism Watch Group">National Security Counter-Terrorism Bureau</option>
+                                <option value="Agricultural Safeguard & Biosecurity Unit">Agricultural Safeguard & Biosecurity Unit</option>
+                            </select>
+                        </div>
+                        <div class="full-width" style="margin-top: 10px;">
+                            <label style="font-weight:bold;">Probable Cause & Interview Focus Details:</label>
+                            <textarea id="questioningDetailsText" style="height:70px; resize:none;" placeholder="Specify exactly why this traveler is flagged for interrogation (e.g., luggage discrepancies, suspect identity timeline, outstanding support warrants)..."></textarea>
+                        </div>
+                    </div>
+                    <div style="text-align: right; margin-top: 15px;">
+                        <button class="btn btn-submit" style="background:#e67e22; color:white;" onclick="submitQuestioning()">TRANSFER TO HOLDING</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -426,7 +455,7 @@
 
         function getRandomPastLogs() {
             let logs = [];
-            let iterations = Math.floor(1 + Math.random() * 3); // 1 to 3 random visits
+            let iterations = Math.floor(1 + Math.random() * 3);
             for (let j = 1; j <= iterations; j++) {
                 let year = Math.floor(2021 + Math.random() * 5);
                 let day = Math.floor(1 + Math.random() * 28);
@@ -447,13 +476,11 @@
                 let nationality = countries[Math.floor(Math.random() * countries.length)];
                 let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
                 
-                // Passport Fields
                 let ppNo = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26)) + Math.floor(10000 + Math.random() * 90000);
                 let ppExp = Math.random() < 0.20 ? "2026-07-15" : "2029-11-12";
                 let ppIssueDate = "2019-11-12";
                 let ppAuthority = "DEPARTMENT OF PASSPORTS OFFICE - " + nationality.substring(0,3).toUpperCase();
                 
-                // Visa Fields
                 let visaNo = "V-" + Math.floor(100000 + Math.random() * 899999);
                 let visaClass = Math.random() > 0.4 ? "B1/B2 Temporary Visitor" : "D1 Diplomatic Mission Entry";
                 let visaIssueLoc = "EMBASSY CONSULATE - " + countries[Math.floor(Math.random() * countries.length)].toUpperCase();
@@ -464,12 +491,10 @@
                 let age = Math.floor(22 + Math.random() * 45);
                 let dob = (2026 - age) + "-05-12";
                 
-                // Fetch random gender-matched first name
                 let firstName = gender === "M" 
                     ? maleFirstNames[Math.floor(Math.random() * maleFirstNames.length)]
                     : femaleFirstNames[Math.floor(Math.random() * femaleFirstNames.length)];
 
-                // Passport Biometric Photo Source (Plain backgrounds matching gender)
                 let photoId = Math.floor(Math.random() * 50);
                 let avatarUrl = gender === "M" 
                     ? `https://xsgames.co/randomusers/assets/avatars/male/${photoId}.jpg`
@@ -502,7 +527,6 @@
                 });
             }
             
-            // Inject Interpol notices
             let interpolIndices = [];
             while(interpolIndices.length < 5) {
                 let rIdx = Math.floor(Math.random() * 100);
@@ -514,7 +538,6 @@
                 database[dbIdx].alertDetails = interpolOffenses[i];
             });
 
-            // Inject Local warrants
             let localIndices = [];
             while(localIndices.length < 5) {
                 let rIdx = Math.floor(Math.random() * 100);
@@ -536,6 +559,7 @@
                 let statusClass = "status-pending";
                 if (row.status === "Approved") statusClass = "status-approved";
                 if (row.status === "Denied") statusClass = "status-denied";
+                if (row.status === "Questioning") statusClass = "status-questioning";
 
                 let riskClass = "risk-low";
                 if (row.interpolWanted) riskClass = "risk-interpol";
@@ -549,7 +573,7 @@
                     <td><strong>${row.passportNum}</strong></td>
                     <td><code>${row.visaNum}</code></td>
                     <td><span class="${riskClass}">${row.riskRating}</span></td>
-                    <td class="${statusClass}">${row.status}</td>
+                    <td><span class="${statusClass}">${row.status}</span></td>
                     <td><button class="btn btn-process" onclick="openModal(${row.id})">Review File</button></td>
                 `;
                 tbody.appendChild(tr);
@@ -575,6 +599,7 @@
 
             document.getElementById("allowFormPanel").style.display = "none";
             document.getElementById("denyFormPanel").style.display = "none";
+            document.getElementById("questioningFormPanel").style.display = "none";
             document.getElementById("decisionButtons").style.display = "block";
 
             let expDate = new Date(p.passportExpiry);
@@ -680,6 +705,32 @@
             let idx = p.previousVisits.length + 1;
             let padIdx = idx < 10 ? "0" + idx : idx;
             p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: ENTRY_REFUSED | Ground Basis: ${reason}`);
+
+            closeModal();
+            renderTable();
+        }
+
+        // NEW: Form activation and entry logic for Questioning Route
+        function initiateQuestioning() {
+            document.getElementById("decisionButtons").style.display = "none";
+            document.getElementById("questioningFormPanel").style.display = "block";
+        }
+
+        function submitQuestioning() {
+            const targetDept = document.getElementById("questioningDept").value;
+            const detailsText = document.getElementById("questioningDetailsText").value;
+            
+            if(!detailsText.trim()) {
+                alert("Please provide the investigative focus details for the target department.");
+                return;
+            }
+
+            let p = database.find(item => item.id === currentProcessingId);
+            p.status = "Questioning";
+            
+            let idx = p.previousVisits.length + 1;
+            let padIdx = idx < 10 ? "0" + idx : idx;
+            p.previousVisits.push(`${padIdx}- ARRIVAL: 20/Jun/2026 POE_04 | Action: DETAINED / DETOUR FOR EXTENDED QUESTIONING | Unit: ${targetDept} | Basis: ${detailsText}`);
 
             closeModal();
             renderTable();
