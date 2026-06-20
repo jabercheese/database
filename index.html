@@ -698,6 +698,7 @@
                 returnTicket: fReturn
             };
 
+            localStorage.setItem("borderControlDB", JSON.stringify(database));
             closeModal();
             renderTable();
         }
@@ -718,6 +719,7 @@
             p.status = "Denied";
             p.denialReason = reason;
 
+            localStorage.setItem("borderControlDB", JSON.stringify(database));
             closeModal();
             renderTable();
         }
@@ -731,7 +733,15 @@
             }
         }
 
-        generateData();
+        // Persistent data loading routine
+        if (localStorage.getItem("borderControlDB")) {
+            const savedData = localStorage.getItem("borderControlDB");
+            database.push(...JSON.parse(savedData));
+        } else {
+            generateData();
+            localStorage.setItem("borderControlDB", JSON.stringify(database));
+        }
+
         renderTable();
     </script>
 </body>
