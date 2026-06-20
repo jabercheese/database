@@ -115,6 +115,7 @@
         .btn-deny { background-color: #c0392b; color: white; padding: 10px 20px; font-size: 1rem; margin-right: 5px;}
         .btn-hold { background-color: #f39c12; color: white; padding: 10px 20px; font-size: 1rem; }
         .btn-submit { background-color: #2e4053; color: white; padding: 10px 20px; font-size: 1rem; }
+        .btn-secondary { background-color: #7f8c8d; color: white; margin-bottom: 5px;}
         
         .status-approved { color: #27ae60; font-weight: bold; }
         .status-denied { color: #c0392b; font-weight: bold; }
@@ -335,9 +336,13 @@
             </div>
             
             <div class="action-area">
+                <div style="text-align: left; margin-bottom: 10px;" id="optElevateContainer">
+                    <button class="btn btn-secondary" onclick="showOptionalAuthPanel()">🔓 View Supervisor Breakdown</button>
+                </div>
+
                 <div id="managerAuthGate" class="auth-panel" style="display:none;">
                     <h4 style="color:#e67e22; margin:0 0 10px 0; font-size:1rem;">🔑 SECURE GATEWAY: AUTHORIZED ACCESS PROTOCOLS REQUIRED</h4>
-                    <p style="margin:0 0 10px 0; font-size:0.85rem; color:#7e5109;">This file contains operational holds. Enter Supervisor/Manager credentials to review background history and authorize actions.</p>
+                    <p style="margin:0 0 10px 0; font-size:0.85rem; color:#7e5109;">Enter Supervisor/Manager credentials to review deep background history logs and hidden credentials.</p>
                     <div style="display:flex; gap:10px;">
                         <input type="password" id="mgrPasswordInput" placeholder="Enter terminal override password..." style="max-width:300px;">
                         <button class="btn btn-submit" onclick="verifyManagerOverride()">VERIFY IDENTITY</button>
@@ -532,7 +537,6 @@
                 });
             }
             
-            // Inject Interpol notices (10 total now)
             let interpolIndices = [];
             while(interpolIndices.length < 10) {
                 let rIdx = Math.floor(Math.random() * 100);
@@ -545,7 +549,6 @@
                 database[dbIdx].alertDetails = interpolOffenses[i];
             });
 
-            // Inject Local warrants (10 total now)
             let localIndices = [];
             while(localIndices.length < 10) {
                 let rIdx = Math.floor(Math.random() * 100);
@@ -607,7 +610,7 @@
             document.getElementById("processModal").style.display = "block";
         }
 
-        // LAYER 1: Officer View (Basic fields only, restricts actions based on safety assessment)
+        // LAYER 1: Officer View
         function buildOfficerLayer() {
             const p = database.find(item => item.id === currentProcessingId);
 
@@ -616,12 +619,15 @@
             document.getElementById("questioningFormPanel").style.display = "none";
 
             if (p.requiresManager) {
+                document.getElementById("optElevateContainer").style.display = "none";
                 document.getElementById("managerAuthGate").style.display = "block";
                 document.getElementById("decisionButtons").style.display = "none";
             } else {
+                document.getElementById("optElevateContainer").style.display = "block";
                 document.getElementById("managerAuthGate").style.display = "none";
                 document.getElementById("decisionButtons").style.display = "block";
-                // Employee restriction: can only toggle access confirmation details for clear profiles
+                
+                // Regular employees can only approve normal clear profiles
                 document.getElementById("actionApproveBtn").style.display = "inline-block";
                 document.getElementById("actionDenyBtn").style.display = "none";
                 document.getElementById("actionHoldBtn").style.display = "none";
@@ -629,7 +635,7 @@
 
             let html = `
                 <div class="photo-frame">
-                    <img src="${p.avatar}" alt="Biometric Photo Asset Loaded">
+                    <img src="${p.avatar}" alt="Biometric Photo">
                 </div>
                 <div class="section-heading">Officer Core Verification Deck</div>
                 <div class="data-group"><label>First Name</label><div>${p.firstName}</div></div>
@@ -646,23 +652,29 @@
             document.getElementById("modalContent").innerHTML = html;
         }
 
-        // Pass Verification to trigger LAYER 2
+        function showOptionalAuthPanel() {
+            document.getElementById("optElevateContainer").style.display = "none";
+            document.getElementById("managerAuthGate").style.display = "block";
+        }
+
         function verifyManagerOverride() {
             const entryPass = document.getElementById("mgrPasswordInput").value;
             if(entryPass === "jab1234jab") {
                 document.getElementById("managerAuthGate").style.display = "none";
+                document.getElementById("optElevateContainer").style.display = "none";
                 buildManagerLayer();
             } else {
                 alert("ACCESS VIOLATION: Invalid credentials logged.");
             }
         }
 
-        // LAYER 2: Manager View (Exposes full dossiers, reasons, and unlock elements)
+        // LAYER 2: Manager View (Exposes full logs regardless of threat state)
         function buildManagerLayer() {
             const p = database.find(item => item.id === currentProcessingId);
 
             document.getElementById("decisionButtons").style.display = "block";
-            // Manager privileges enabled: allow/reject exceptions active
+            
+            // Managers can execute any command path
             document.getElementById("actionApproveBtn").style.display = "inline-block";
             document.getElementById("actionDenyBtn").style.display = "inline-block";
             document.getElementById("actionHoldBtn").style.display = "inline-block";
@@ -675,13 +687,19 @@
                 html += `
                 <div class="alert-banner alert-interpol-banner">
                     <strong>🚨 MATCH LOGGED: ${p.alertDetails}</strong><br>
-                    <span>ACTION CRITERIA: MANAGER ELEVATION UNLOCKED. PROCEED WITH REJECTION PROTOCOL OR ESCALATED INTERROGATION TRANSFER.</span>
+                    <span>ACTION CRITERIA: OVERRIDE GRANTED. EXECUTE SYSTEM SEGREGATION FOR AUDIT HISTORY.</span>
                 </div>`;
             } else if (p.localWanted) {
                 html += `
                 <div class="alert-banner alert-state-banner">
                     <strong>⚠️ DOMESTIC ALERT DETECTED: ${p.alertDetails}</strong><br>
-                    <span>ACTION CRITERIA: OUTSTANDING STATE DECREE IN EFFECT. EVALUATE TARGET DEPT FOR IMMEDIATE ROUTING.</span>
+                    <span>ACTION CRITERIA: MANDATORY LOCAL HOLD IN PLACE. ESCALATE INTERVIEW DISPATCH.</span>
+                </div>`;
+            } else {
+                html += `
+                <div class="alert-banner" style="background:#e8f8f5; color:#117a65; border-left:8px solid #2cc9a0;">
+                    <strong>ℹ️ SUPERVISOR INTERVIEW AUDIT ACCESS ACTIVE</strong><br>
+                    <span>Displaying full historical record sets and visa timeline registries. Profile lacks internal system flags.</span>
                 </div>`;
             }
 
@@ -696,7 +714,7 @@
                 <div class="data-group"><label>Nationality</label><div>${p.nationality}</div></div>
                 <div class="data-group"><label>Date of Birth / Age</label><div>${p.dob} (Age: ${p.age})</div></div>
                 <div class="data-group"><label>Gender</label><div>${p.gender === 'M' ? 'Male (M)' : 'Female (F)'}</div></div>
-                <div class="data-group"><label>Detailed System Risk Assessment</label><div style="color:#cc0000; font-weight:bold;">${p.riskRating}</div></div>
+                <div class="data-group"><label>Detailed System Risk Assessment</label><div style="font-weight:bold; color: ${p.requiresManager ? '#cc0000' : '#27ae60'}">${p.riskRating}</div></div>
 
                 <div class="section-heading">Primary Passport Register Logs</div>
                 <div class="data-group"><label>Passport Number</label><div><strong>${p.passportNum}</strong></div></div>
