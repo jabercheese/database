@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,6 +138,18 @@ HTML
         .risk-low {
             color: #7f8c8d;
         }
+        .risk-interpol {
+            color: #fff;
+            font-weight: bold;
+            background-color: #cc0000;
+            padding: 2px 8px;
+            border-radius: 3px;
+            animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0.5; }
+        }
+        
         .expiry-alert {
             color: #fff !important;
             background-color: #c0392b !important;
@@ -146,6 +157,23 @@ HTML
             font-weight: bold;
             border-radius: 3px;
             display: inline-block;
+        }
+
+        /* Interpol Red Notice Styling inside profile */
+        .interpol-banner {
+            grid-column: span 2;
+            background-color: #7a0000;
+            color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 8px solid #ff0000;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .interpol-banner h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            color: #ffcdd2;
         }
 
         /* Modal Settings */
@@ -383,10 +411,19 @@ HTML
         ];
         const reasonsList = ["Tourism", "Visiting family", "Visiting friends", "Treatment", "Studying"];
         
+        const interpolOffenses = [
+            "WANTED BY LONDRES LFC: Primary suspect involved in cross-border corporate financial asset embezzlement exceeding €4.2M. High escape threat.",
+            "WANTED BY WASHINGTON HQ: Identity document fabrication and high-volume commercial cyber-fraud systems generation. Federal warrant active.",
+            "WANTED BY BERLIN POLIZEI: Affiliated with maritime smuggling networks operating illicit supply transport. Hold and notify dispatch units instantly.",
+            "WANTED BY TOKYO MPD: Major intellectual property theft and unauthorized system infiltration targeting national utility networks.",
+            "WANTED BY PARIS SG: Connection to organized high-value cargo theft syndicates operating across Western European transit ports."
+        ];
+
         const database = [];
         const SYSTEM_DATE = new Date('2026-06-20');
 
         function generateData() {
+            // Generate standard 100 sets
             for (let i = 0; i < 100; i++) {
                 let nationality = countries[Math.floor(Math.random() * countries.length)];
                 let birthCountry = Math.random() > 0.85 ? countries[Math.floor(Math.random() * countries.length)] : nationality;
@@ -435,6 +472,8 @@ HTML
                     visaException: isDiplomatic ? "Diplomatic" : "Normal",
                     interrogationSummary: isHighRisk ? riskNotes[Math.floor(Math.random() * 3)] : riskNotes[3 + Math.floor(Math.random() * 2)],
                     riskRating: isHighRisk ? "High Risk" : "Low Risk",
+                    interpolWanted: false,
+                    interpolDetails: "",
                     previousVisits: histArray.join("<br>"),
                     status: "Pending",
                     denialReason: "",
@@ -443,7 +482,23 @@ HTML
                 });
             }
             
-            // Inject a static clean example to the top row for easier immediate evaluation
+            // Pick exactly 5 random unique indices to inject Interpol Red Notices
+            let interpolIndices = [];
+            while(interpolIndices.length < 5) {
+                let rIndex = Math.floor(Math.random() * 100);
+                if(!interpolIndices.includes(rIndex)) {
+                    interpolIndices.push(rIndex);
+                }
+            }
+
+            // Assign Interpol details to those 5 individuals
+            interpolIndices.forEach((dbIdx, arrayIdx) => {
+                database[dbIdx].riskRating = "INTERPOL RED NOTICE";
+                database[dbIdx].interpolWanted = true;
+                database[dbIdx].interpolDetails = interpolOffenses[arrayIdx];
+            });
+
+            // Keep index 0 predictable for fast verification testing
             database[0].passportNum = "ABC12345";
         }
 
@@ -455,7 +510,9 @@ HTML
                 if (row.status === "Approved") statusClass = "status-approved";
                 if (row.status === "Denied") statusClass = "status-denied";
 
-                let riskClass = row.riskRating === "High Risk" ? "risk-high" : "risk-low";
+                let riskClass = "risk-low";
+                if (row.riskRating === "High Risk") riskClass = "risk-high";
+                if (row.interpolWanted) riskClass = "risk-interpol";
 
                 let tr = document.createElement("tr");
                 tr.innerHTML = `
@@ -471,7 +528,6 @@ HTML
             });
         }
 
-        // Direct isolated passport selector search logic
         function lookupPassport() {
             const rawVal = document.getElementById("passportLookupInput").value.trim().toUpperCase();
             if(!rawVal) {
@@ -481,7 +537,7 @@ HTML
             const match = database.find(item => item.passportNum.toUpperCase() === rawVal);
             if(match) {
                 openModal(match.id);
-                document.getElementById("passportLookupInput").value = ""; // clear window
+                document.getElementById("passportLookupInput").value = ""; 
             } else {
                 alert("PASSPORT ERROR: Serial reference number not discovered inside master log files.");
             }
@@ -502,9 +558,23 @@ HTML
             let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             let passportWarningStyle = (diffDays <= 180) ? "class='expiry-alert'" : "";
 
-            let riskTextStyle = p.riskRating === "High Risk" ? "class='risk-high'" : "";
+            let riskTextStyle = "";
+            if (p.riskRating === "High Risk") riskTextStyle = "class='risk-high'";
+            if (p.interpolWanted) riskTextStyle = "class='risk-interpol'";
 
-            let html = `
+            let html = "";
+
+            // Inject bold banner immediately if Interpol status is true
+            if(p.interpolWanted) {
+                html += `
+                <div class="interpol-banner">
+                    <h4>🚨 CRITICAL ALERT: INTERPOL RED NOTICE</h4>
+                    <strong>OFFENSE DETAILS:</strong> ${p.interpolDetails}<br>
+                    <span style="color:#ffeb3b; font-weight:bold;">ACTION REQUIRED: DETAIN PASSENGER & CONTACT AIRPORT SECURITY IMMEDIATELY.</span>
+                </div>`;
+            }
+
+            html += `
                 <div class="data-group">
                     <label>First Name</label>
                     <div>${p.firstName}</div>
@@ -598,7 +668,6 @@ HTML
         function initiateApproval() {
             document.getElementById("decisionButtons").style.display = "none";
             document.getElementById("allowFormPanel").style.display = "block";
-            // clear inputs
             document.getElementById("flightFrom").value = "";
             document.getElementById("flightAirline").value = "";
             document.getElementById("flightDepart").value = "";
@@ -620,7 +689,7 @@ HTML
 
             let p = database.find(item => item.id === currentProcessingId);
             p.status = "Approved";
-            p.officerNotes = oNotes; // Saves custom security warning/notes text line
+            p.officerNotes = oNotes; 
             p.flightDetails = {
                 from: fFrom,
                 airline: fAirline,
