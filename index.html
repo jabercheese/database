@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Immigration Entry Control System (Demo)</title>
+<title>Travel Verification Simulator</title>
 
 <style>
 body{
+    font-family: Arial;
     margin:0;
-    font-family:Arial,sans-serif;
     background:#f4f6f8;
 }
 
 header{
-    background:#23313f;
+    background:#1f2d3a;
     color:white;
     padding:15px;
 }
@@ -22,420 +21,208 @@ header{
     padding:15px;
 }
 
-.controls{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
+.search{
+    width:100%;
+    padding:10px;
+    font-size:16px;
     margin-bottom:15px;
 }
 
-input,select,textarea{
-    padding:8px;
-    border:1px solid #ccc;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-}
-
-th{
-    background:#2d3f50;
-    color:white;
-    padding:10px;
-}
-
-td{
-    border:1px solid #ddd;
-    padding:8px;
-    font-size:13px;
-}
-
-tr:hover{
-    background:#f2f2f2;
-    cursor:pointer;
-}
-
-.panel{
-    margin-top:15px;
+.card{
     background:white;
     padding:15px;
     border:1px solid #ddd;
 }
 
-.status-approved{
-    color:green;
-    font-weight:bold;
-}
-
-.status-denied{
-    color:red;
-    font-weight:bold;
-}
-
-.status-pending{
-    color:#666;
-    font-weight:bold;
-}
+.good{color:green;font-weight:bold;}
+.bad{color:red;font-weight:bold;}
+.mid{color:orange;font-weight:bold;}
+.blue{color:#2b6cb0;font-weight:bold;}
 
 button{
     padding:8px 12px;
+    margin-right:5px;
     cursor:pointer;
 }
 
-.allow{
-    background:#28a745;
-    color:white;
-    border:none;
-}
-
-.deny{
-    background:#dc3545;
-    color:white;
-    border:none;
-}
-
-.warning{
-    color:#d35400;
-    font-weight:bold;
-}
-
-.risk{
-    font-weight:bold;
-}
+.allow{background:#28a745;color:white;border:none;}
+.deny{background:#dc3545;color:white;border:none;}
 </style>
 </head>
+
 <body>
 
 <header>
-<h2>IMMIGRATION ENTRY CONTROL SYSTEM (DEMO)</h2>
+<h2>TRAVEL VERIFICATION SIMULATOR (FICTIONAL)</h2>
 </header>
 
 <div class="container">
 
-<div class="controls">
-<input id="search" placeholder="Search..." onkeyup="renderTable()">
+<input class="search" id="searchBox" placeholder="Enter Document ID (e.g. DOC-000123)" onkeyup="search()">
 
-<select id="statusFilter" onchange="renderTable()">
-<option value="">All Statuses</option>
-<option>Pending</option>
-<option>Allowed</option>
-<option>Denied</option>
-</select>
-
-<select id="riskFilter" onchange="renderTable()">
-<option value="">All Risks</option>
-<option>High</option>
-<option>Medium</option>
-<option>Low</option>
-</select>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>Name</th>
-<th>Passport</th>
-<th>Visa</th>
-<th>Risk</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="tableBody"></tbody>
-</table>
-
-<div class="panel" id="profilePanel">
-Select a passenger...
+<div id="result" class="card">
+Enter an ID to retrieve traveler record.
 </div>
 
 </div>
 
 <script>
 
-const FIRST_NAMES = [
-"Alex","Taylor","Jordan","Morgan","Casey",
-"Riley","Sky","Avery","Quinn","Parker"
+let db={};
+
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+const names=[
+"James Carter","Olivia Brooks","Ethan Walker","Charlotte Reed",
+"Benjamin Hayes","Sophia Turner","Lucas Mitchell","Emma Collins",
+"Daniel Scott","Mia Johnson"
 ];
 
-const LAST_NAMES = [
-"North","West","Stone","River","Vale",
-"Bright","Summit","Harbor","Lake","Field"
-];
-
-let passengers=[];
-
-function randomItem(arr){
-    return arr[Math.floor(Math.random()*arr.length)];
+function riskCalc(p){
+    let r=0;
+    if(p.overstay) r+=40;
+    if(p.visits>0) r+=20;
+    if(p.expired) r+=30;
+    return r;
 }
 
-function loadData(){
-
-    const saved=localStorage.getItem("immigrationDemo");
-
-    if(saved){
-        passengers=JSON.parse(saved);
-        return;
-    }
-
-    for(let i=1;i<=150;i++){
-
-        const overstay=Math.random()<0.15;
-        const expiredVisa=Math.random()<0.08;
-
-        let risk="Low";
-
-        if(overstay) risk="High";
-        else if(Math.random()<0.25) risk="Medium";
-
-        passengers.push({
-
-            id:"USER-"+String(i).padStart(3,"0"),
-
-            firstName:randomItem(FIRST_NAMES),
-            lastName:randomItem(LAST_NAMES),
-
-            dob:"199"+(i%10)+"-0"+((i%9)+1)+"-15",
-
-            gender:i%2?"Male":"Female",
-
-            passport:
-            "PASS-DEMO-"+String(i).padStart(6,"0"),
-
-            passportExpiry:
-            i%20===0 ?
-            "2026-07-01" :
-            "2028-12-31",
-
-            visaNumber:
-            "VISA-DEMO-"+String(i).padStart(6,"0"),
-
-            visaStart:"2026-04-01",
-
-            visaExpiry:
-            expiredVisa ?
-            "2026-05-01" :
-            "2026-12-31",
-
-            visaType:
-            i%2 ? "Single Entry" : "Multiple Entry",
-
-            visaDuration:
-            i%2 ? "30 Days" : "60 Days",
-
-            exception:
-            i%17===0 ? "Diplomatic" : "Normal",
-
-            previousVisits:
-            [
-                {
-                    visit:1,
-                    daysStayed:
-                    overstay ? 120 : 20
-                }
-            ],
-
-            overstay,
-
-            risk,
-
-            status:"Pending",
-
-            denialReason:""
-
-        });
-
-    }
-
-    saveData();
+function riskLabel(r){
+    if(r>=60) return "HIGH";
+    if(r>=30) return "MEDIUM";
+    return "LOW";
 }
 
-function saveData(){
-    localStorage.setItem(
-        "immigrationDemo",
-        JSON.stringify(passengers)
-    );
+function colorClass(r){
+    if(r>=60) return "bad";
+    if(r>=30) return "mid";
+    return "good";
 }
 
-function renderTable(){
+function generate(){
 
-    const search=
-    document.getElementById("search")
-    .value.toLowerCase();
+for(let i=1;i<=150;i++){
 
-    const statusFilter=
-    document.getElementById("statusFilter")
-    .value;
+let visits=Math.floor(Math.random()*3);
 
-    const riskFilter=
-    document.getElementById("riskFilter")
-    .value;
+let overstay=Math.random()<0.2;
 
-    const body=
-    document.getElementById("tableBody");
+let expired=Math.random()<0.1;
 
-    body.innerHTML="";
+db["DOC-"+String(i).padStart(6,"0")] = {
 
-    passengers.forEach(p=>{
+id:"DOC-"+String(i).padStart(6,"0"),
+name:rand(names),
 
-        const text=
-        JSON.stringify(p).toLowerCase();
+dob:"199"+(i%9)+"-"+((i%12)+1).toString().padStart(2,"0")+"-1"+(i%9),
 
-        if(search &&
-           !text.includes(search))
-           return;
+gender:i%2?"Male":"Female",
 
-        if(statusFilter &&
-           p.status!==statusFilter)
-           return;
+passportCountry:"Fictionland",
 
-        if(riskFilter &&
-           p.risk!==riskFilter)
-           return;
+visaType: visits>0 ? "Multiple Entry" : "Single Entry",
 
-        body.innerHTML+=`
-        <tr onclick="showProfile('${p.id}')">
-            <td>${p.id}</td>
-            <td>${p.firstName} ${p.lastName}</td>
-            <td>${p.passport}</td>
-            <td>${p.visaNumber}</td>
-            <td>${p.risk}</td>
-            <td>${p.status}</td>
-        </tr>`;
-    });
+visaDuration: visits>0 ? "60 Days" : "30 Days",
+
+visaStatus:"Active",
+
+passportExpiry: expired ? "2026-05-10":"2028-11-20",
+
+visaExpiry: expired ? "2026-06-01":"2026-12-31",
+
+visits:visits,
+
+overstay:overstay,
+
+risk:0,
+
+notes:[
+"Routine screening completed",
+"No security alerts"
+],
+
+history:[
+"Interview 1: Standard entry clearance",
+"Interview 2: Border check completed"
+],
+
+status:"Pending"
+
+};
+
+db["DOC-"+String(i).padStart(6,"0")].risk =
+riskCalc(db["DOC-"+String(i).padStart(6,"0")]);
 }
 
-function showProfile(id){
-
-    const p=
-    passengers.find(x=>x.id===id);
-
-    let warning="";
-
-    if(p.overstay)
-        warning +=
-        "<div class='warning'>Previous Overstay Detected</div>";
-
-    if(p.passportExpiry <
-       "2026-12-31")
-        warning +=
-        "<div class='warning'>Passport Near Expiry</div>";
-
-    if(p.visaExpiry <
-       "2026-06-20")
-        warning +=
-        "<div class='warning'>Visa Expired</div>";
-
-    document.getElementById(
-    "profilePanel").innerHTML=`
-
-    <h3>${p.firstName}
-    ${p.lastName}</h3>
-
-    ${warning}
-
-    <p><b>ID:</b> ${p.id}</p>
-    <p><b>DOB:</b> ${p.dob}</p>
-    <p><b>Gender:</b> ${p.gender}</p>
-
-    <p><b>Passport:</b>
-    ${p.passport}</p>
-
-    <p><b>Passport Expiry:</b>
-    ${p.passportExpiry}</p>
-
-    <p><b>Visa:</b>
-    ${p.visaNumber}</p>
-
-    <p><b>Visa Type:</b>
-    ${p.visaType}</p>
-
-    <p><b>Visa Duration:</b>
-    ${p.visaDuration}</p>
-
-    <p><b>Exception:</b>
-    ${p.exception}</p>
-
-    <p><b>Risk Score:</b>
-    <span class="risk">${p.risk}</span></p>
-
-    <p><b>Status:</b>
-    ${p.status}</p>
-
-    <p><b>Previous Visits:</b></p>
-
-    <ul>
-    ${p.previousVisits.map(v=>`
-        <li>
-        Visit ${v.visit}
-        - Stayed ${v.daysStayed}
-        days
-        </li>
-    `).join("")}
-    </ul>
-
-    <textarea
-    id="reasonBox"
-    placeholder="Denial reason"
-    rows="3"
-    style="width:100%;">${p.denialReason}</textarea>
-
-    <br><br>
-
-    <button
-    class="allow"
-    onclick="allowEntry('${p.id}')">
-    Allow Entry
-    </button>
-
-    <button
-    class="deny"
-    onclick="denyEntry('${p.id}')">
-    Deny Entry
-    </button>
-    `;
 }
 
-function allowEntry(id){
+function search(){
 
-    const p=
-    passengers.find(x=>x.id===id);
+let id=document.getElementById("searchBox").value.trim();
 
-    p.status="Allowed";
-    p.denialReason="";
+let r=db[id];
 
-    saveData();
-    renderTable();
-    showProfile(id);
+let out=document.getElementById("result");
+
+if(!r){
+out.innerHTML="No record found.";
+return;
 }
 
-function denyEntry(id){
+out.innerHTML=`
+<h3>${r.name}</h3>
 
-    const reason=
-    document.getElementById("reasonBox")
-    .value.trim();
+<p><b>ID:</b> ${r.id}</p>
+<p><b>DOB:</b> ${r.dob}</p>
+<p><b>Gender:</b> ${r.gender}</p>
 
-    if(!reason){
-        alert(
-        "Denial reason required.");
-        return;
-    }
+<p><b>Passport Country:</b> ${r.passportCountry}</p>
+<p><b>Passport Expiry:</b> ${r.passportExpiry}</p>
 
-    const p=
-    passengers.find(x=>x.id===id);
+<p><b>Visa Type:</b> ${r.visaType}</p>
+<p><b>Visa Duration:</b> ${r.visaDuration}</p>
+<p><b>Visa Expiry:</b> ${r.visaExpiry}</p>
 
-    p.status="Denied";
-    p.denialReason=reason;
+<p><b>Previous Visits:</b> ${r.visits}</p>
 
-    saveData();
-    renderTable();
-    showProfile(id);
+<p><b>Risk Level:</b>
+<span class="${colorClass(r.risk)}">
+${riskLabel(r.risk)}
+</span>
+</p>
+
+<p><b>Officer Notes:</b></p>
+<ul>${r.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
+
+<p><b>Interview History:</b></p>
+<ul>${r.history.map(h=>`<li>${h}</li>`).join("")}</ul>
+
+<hr>
+
+<button class="allow" onclick="allow('${r.id}')">ALLOW ENTRY</button>
+<button class="deny" onclick="deny('${r.id}')">DENY ENTRY</button>
+
+<br><br>
+<textarea id="reason" placeholder="Denial reason..." style="width:100%;height:60px;"></textarea>
+
+<p><b>Status:</b> ${r.status}</p>
+`;
+
 }
 
-loadData();
-renderTable();
+function allow(id){
+db[id].status="Allowed";
+search();
+}
+
+function deny(id){
+let reason=document.getElementById("reason").value;
+if(!reason) return alert("Enter reason");
+db[id].status="Denied";
+db[id].notes.push("Denied: "+reason);
+search();
+}
+
+generate();
 
 </script>
 
